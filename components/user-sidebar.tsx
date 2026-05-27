@@ -27,6 +27,7 @@ import { userService, notificationService } from "@/lib/supabase-services";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { BankLogo } from "@/components/bank-logo";
 
 interface User {
   id: string;
@@ -122,14 +123,8 @@ export function UserSidebar() {
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={cn("flex flex-col h-full", mobile ? "w-full" : "")}>
       <div className="p-6">
-        <div className="flex items-center mb-8">
-          <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-xl mr-3">
-            F
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">FinanceHub</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Banking & Investment</p>
-          </div>
+        <div className="mb-8">
+          <BankLogo compact subtitle="Digital Banking" />
         </div>
 
         <nav className="space-y-6">

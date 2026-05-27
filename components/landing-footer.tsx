@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BankLogo } from "@/components/bank-logo";
 
 export function LandingFooter() {
   return (
@@ -6,7 +7,9 @@ export function LandingFooter() {
       <div className="container mx-auto px-4">
         <div className="grid gap-8 md:grid-cols-4 mb-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">Valtier Finacial Group</h3>
+            <div className="mb-4">
+              <BankLogo subtitle="Modern Banking Solutions" theme="dark" />
+            </div>
             <p className="text-gray-400 mb-4">
               Modern banking solutions for individuals and businesses.
             </p>

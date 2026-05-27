@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
+import { BankLogo } from "@/components/bank-logo";
 
 export function CredixNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -60,18 +60,12 @@ export function CredixNavbar() {
           <div className="flex justify-between items-center h-16 lg:h-18">
             {/* Logo */}
             <div className="flex items-center group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary-400/20 rounded-xl blur-lg group-hover:bg-primary-400/30 transition-all duration-300"></div>
-                <Link href="/">
-                  <Image
-                    src="https://credix.deckmaxx.top/storage/app/public/photos/ld5cTft2xx1jZ1PGQFo5qM2UVT85tmHmm2YyddqC.png"
-                    alt="Valtier Finacial Group"
-                    width={120}
-                    height={40}
-                    className="relative h-10 lg:h-10 w-auto"
-                  />
-                </Link>
-              </div>
+              <Link href="/" className="relative">
+                <div className="absolute inset-0 rounded-2xl bg-primary-400/15 blur-lg transition-all duration-300 group-hover:bg-primary-400/25"></div>
+                <div className="relative rounded-2xl px-1 py-1">
+                  <BankLogo compact subtitle="Global Digital Banking" />
+                </div>
+              </Link>
             </div>
 
             {/* Desktop Navigation */}

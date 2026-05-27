@@ -34,6 +34,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { BankLogo } from "@/components/bank-logo";
 
 interface User {
   id: number;
@@ -79,10 +80,7 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
           <SheetContent side="left" className="p-0">
             <SheetHeader className="p-4 border-b border-border">
               <SheetTitle className="flex items-center">
-                <div className="h-8 w-8 rounded-md bg-emerald-500 flex items-center justify-center text-white mr-2">
-                  <DollarSign className="h-5 w-5" />
-                </div>
-                <span>Valtier Finacial Group</span>
+                <BankLogo compact subtitle="Mobile Banking" />
               </SheetTitle>
             </SheetHeader>
             <div className="py-4">
@@ -161,7 +159,7 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
             </div>
           </SheetContent>
         </Sheet>
-        <h1 className="text-xl font-semibold">Valtier Finacial Group</h1>
+        <BankLogo compact subtitle="Mobile Banking" className="min-w-0" />
         <div className="flex items-center space-x-2">
           <ThemeToggle />
           <DropdownMenu>
@@ -196,11 +194,8 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
 
       <div className="flex">
         <aside className="hidden md:flex flex-col w-64 h-screen bg-card border-r border-border p-4">
-          <div className="flex items-center mb-8">
-            <div className="h-8 w-8 rounded-md bg-emerald-500 flex items-center justify-center text-white mr-2">
-              <DollarSign className="h-5 w-5" />
-            </div>
-            <h1 className="text-xl font-bold">Valtier Finacial Group</h1>
+          <div className="mb-8">
+            <BankLogo compact subtitle="Digital Banking" />
           </div>
           <nav className="flex-1">
             <div className="space-y-1">

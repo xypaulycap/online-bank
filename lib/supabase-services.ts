@@ -432,7 +432,7 @@ export const accountService = {
     // Create transaction record with bank details in description
     // recipient_account_id is null for external wire transfers
     const fullDescription = bankDetails 
-      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nRecipient Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
+      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nSender Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
       : `${description}\n\nRecipient Account: ${recipientAccountNumber}`
 
     const { data: transaction, error: txError } = await supabase
@@ -507,7 +507,7 @@ export const accountService = {
     // For wire transfers, recipient is external (not in our database)
     // Store recipient account number and bank details in description
     const fullDescription = bankDetails 
-      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nRecipient Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
+      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nSender Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
       : `${description}\n\nRecipient Account: ${recipientAccountNumber}`
 
     // Create transaction record with status: pending

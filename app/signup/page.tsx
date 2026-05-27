@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { authService } from "@/lib/supabase-services";
+import { BankLogo } from "@/components/bank-logo";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -52,7 +53,13 @@ export default function Signup() {
 
   return (
     <div className="w-full max-w-md mx-auto mt-12 p-8 bg-card rounded-xl shadow-sm border border-border">
-      <h2 className="text-2xl font-bold mb-6 text-center">Sign Up for Valtier Finacial Group</h2>
+      <div className="mb-6 flex justify-center">
+        <BankLogo subtitle="Open Your Account" />
+      </div>
+      <h2 className="text-2xl font-bold mb-2 text-center">Create Your Account</h2>
+      <p className="mb-6 text-center text-sm text-muted-foreground">
+        Join Valtier Finacial Group and get started with secure digital banking.
+      </p>
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md text-sm">
           {error}

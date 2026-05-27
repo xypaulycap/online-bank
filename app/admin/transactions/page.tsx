@@ -89,6 +89,13 @@ function extractDescriptionField(description: string | null | undefined, label: 
   return match?.[1]?.trim() || null;
 }
 
+function extractEmailField(description: string | null | undefined): string | null {
+  return (
+    extractDescriptionField(description, "Sender Email") ||
+    extractDescriptionField(description, "Recipient Email")
+  );
+}
+
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -640,7 +647,7 @@ export default function AdminTransactionsPage() {
             <TableBody>
               {transactions.map((transaction) => (
                   (() => {
-                    const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+                    const recipientEmail = extractEmailField(transaction.description);
                     return (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-mono">{transaction.id}</TableCell>
@@ -787,7 +794,7 @@ export default function AdminTransactionsPage() {
           {selectedTransaction && (
             <div className="space-y-4">
               {(() => {
-                const recipientEmail = extractDescriptionField(selectedTransaction.description, "Recipient Email");
+                const recipientEmail = extractEmailField(selectedTransaction.description);
                 return (
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <div className="text-sm">
@@ -818,7 +825,7 @@ export default function AdminTransactionsPage() {
                 )}
                 {recipientEmail && (
                   <div className="text-sm">
-                    <span className="font-medium">Recipient Email:</span> <span className="break-all">{recipientEmail}</span>
+                    <span className="font-medium">Sender Email:</span> <span className="break-all">{recipientEmail}</span>
                   </div>
                 )}
               </div>

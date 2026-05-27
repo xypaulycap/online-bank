@@ -14,6 +14,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { BankLogo } from "@/components/bank-logo";
 
 interface NavigationProps {
   children: React.ReactNode;
@@ -63,10 +64,8 @@ export function Navigation({ children }: NavigationProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <div className="mr-4 hidden md:flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <span className="hidden font-bold sm:inline-block">
-                Valtier Finacial Group
-              </span>
+            <Link href="/" className="mr-6 flex items-center">
+              <BankLogo compact subtitle="Secure Online Banking" />
             </Link>
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <Link

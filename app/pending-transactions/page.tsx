@@ -57,6 +57,13 @@ function extractDescriptionField(description: string | null | undefined, label: 
   return match?.[1]?.trim() || null;
 }
 
+function extractEmailField(description: string | null | undefined): string | null {
+  return (
+    extractDescriptionField(description, "Sender Email") ||
+    extractDescriptionField(description, "Recipient Email")
+  );
+}
+
 export default function PendingTransactionsPage() {
   const [pendingTransactions, setPendingTransactions] = useState<PendingTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -304,7 +311,7 @@ export default function PendingTransactionsPage() {
               <TableBody>
                 {pendingTransactions.filter(t => !t.status || t.status === 'pending').map((transaction) => (
                   (() => {
-                    const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+                    const recipientEmail = extractEmailField(transaction.description);
                     return (
                   <TableRow key={transaction.id}>
                     <TableCell>
@@ -388,7 +395,7 @@ export default function PendingTransactionsPage() {
           {selectedTransaction && (
             <div className="space-y-4">
               {(() => {
-                const recipientEmail = extractDescriptionField(selectedTransaction.description, "Recipient Email");
+                const recipientEmail = extractEmailField(selectedTransaction.description);
                 return (
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm font-medium mb-2">Transaction Details:</p>
@@ -401,7 +408,7 @@ export default function PendingTransactionsPage() {
                   <p className="text-sm">To: <span className="font-medium">External account</span></p>
                 )}
                 {recipientEmail && (
-                  <p className="text-sm">Recipient Email: <span className="font-medium break-all">{recipientEmail}</span></p>
+                  <p className="text-sm">Sender Email: <span className="font-medium break-all">{recipientEmail}</span></p>
                 )}
               </div>
                 );

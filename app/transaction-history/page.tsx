@@ -28,6 +28,13 @@ function extractDescriptionField(description: string | null | undefined, label: 
   return match?.[1]?.trim() || null;
 }
 
+function extractEmailField(description: string | null | undefined): string | null {
+  return (
+    extractDescriptionField(description, "Sender Email") ||
+    extractDescriptionField(description, "Recipient Email")
+  );
+}
+
 function getTransactionSummary(description: string | null | undefined, fallback: string): string {
   if (!description) return fallback;
 
@@ -38,6 +45,7 @@ function getTransactionSummary(description: string | null | undefined, fallback:
     .filter(
       (line) =>
         !line.startsWith("Recipient Account:") &&
+        !line.startsWith("Sender Email:") &&
         !line.startsWith("Recipient Email:") &&
         !line.startsWith("Bank Details:") &&
         !line.startsWith("Bank Name:") &&
@@ -161,7 +169,7 @@ export default function TransactionHistory() {
               <TableBody>
                 {transactions.map((txn) => (
                   (() => {
-                    const recipientEmail = extractDescriptionField(txn.description, "Recipient Email");
+                    const recipientEmail = extractEmailField(txn.description);
                     const summary = getTransactionSummary(
                       txn.description,
                       txn.transaction_type.charAt(0).toUpperCase() + txn.transaction_type.slice(1).replace("_", " ")
@@ -180,7 +188,7 @@ export default function TransactionHistory() {
                         <div>{summary}</div>
                         {txn.transaction_type === "wire_transfer" && recipientEmail && (
                           <div className="text-xs text-muted-foreground break-all">
-                            Recipient Email: {recipientEmail}
+                            Sender Email: {recipientEmail}
                           </div>
                         )}
                       </div>

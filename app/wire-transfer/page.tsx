@@ -125,7 +125,7 @@ export default function WireTransferPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a valid recipient email address",
+        description: "Please enter a valid sender email address",
       });
       return;
     }
@@ -338,7 +338,7 @@ export default function WireTransferPage() {
             </div>
 
             <div>
-              <Label htmlFor="recipient_email">Recipient Email</Label>
+              <Label htmlFor="recipient_email">Sender Email</Label>
               <Input
                 id="recipient_email"
                 type="email"
@@ -348,7 +348,7 @@ export default function WireTransferPage() {
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Enter the recipient&apos;s email address for this international transfer
+                Enter the sender&apos;s email address for this international transfer
               </p>
             </div>
 

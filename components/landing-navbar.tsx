@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, Landmark } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { BankLogo } from "@/components/bank-logo";
 
 const navLinks = [
   { href: "#features", label: "Features" },
@@ -20,9 +21,8 @@ export function LandingNavbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Landmark className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">Valtier Finacial Group</span>
+          <Link href="/" className="mr-6 flex items-center">
+            <BankLogo compact subtitle="Trusted Private Banking" />
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
@@ -48,9 +48,8 @@ export function LandingNavbar() {
           <SheetContent side="left">
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between p-4 border-b">
-                 <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Landmark className="h-6 w-6" />
-                    <span className="font-bold">Valtier Finacial Group</span>
+                 <Link href="/" className="flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+                    <BankLogo compact subtitle="Trusted Private Banking" />
                  </Link>
                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                     <X className="h-5 w-5" />

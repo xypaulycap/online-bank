@@ -38,6 +38,7 @@ import { userService, accountService, transactionService, notificationService } 
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, getCurrencySymbol } from "@/lib/utils";
+import { BankLogo } from "@/components/bank-logo";
 
 interface User {
   id: string;
@@ -85,6 +86,13 @@ function extractDescriptionField(description: string | null | undefined, label: 
   return match?.[1]?.trim() || null;
 }
 
+function extractEmailField(description: string | null | undefined): string | null {
+  return (
+    extractDescriptionField(description, "Sender Email") ||
+    extractDescriptionField(description, "Recipient Email")
+  );
+}
+
 function getTransactionSummary(description: string | null | undefined, fallback: string): string {
   if (!description) return fallback;
 
@@ -95,6 +103,7 @@ function getTransactionSummary(description: string | null | undefined, fallback:
     .filter(
       (line) =>
         !line.startsWith("Recipient Account:") &&
+        !line.startsWith("Sender Email:") &&
         !line.startsWith("Recipient Email:") &&
         !line.startsWith("Bank Details:") &&
         !line.startsWith("Bank Name:") &&
@@ -213,8 +222,8 @@ export default function Dashboard() {
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Dashboard</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <BankLogo compact subtitle="Client Dashboard" />
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 Welcome back, {user ? `${user.first_name} ${user.last_name}` : "User"}
               </p>
             </div>
@@ -498,7 +507,7 @@ export default function Dashboard() {
                           transaction.transaction_type.charAt(0).toUpperCase() +
                           transaction.transaction_type.slice(1).replace("_", " ");
                         const summary = getTransactionSummary(transaction.description, fallbackLabel);
-                        const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+                        const recipientEmail = extractEmailField(transaction.description);
 
                         return (
                         <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -529,7 +538,7 @@ export default function Dashboard() {
                               </p>
                               {transaction.transaction_type === "wire_transfer" && recipientEmail && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400 break-all">
-                                  Recipient Email: {recipientEmail}
+                                  Sender Email: {recipientEmail}
                                 </p>
                               )}
                             </div>
