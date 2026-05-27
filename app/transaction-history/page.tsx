@@ -13,12 +13,39 @@ import { supabase } from "@/lib/supabase";
 interface Transaction {
   id: number;
   account: number;
-  transaction_type: "withdrawal" | "deposit" | "transfer" | "payment";
+  transaction_type: "withdrawal" | "deposit" | "transfer" | "payment" | "local_transfer" | "wire_transfer";
   amount: string;
   description: string;
   category: { id: number; name: string; description: string } | null;
   recipient_account: number | null;
   timestamp: string;
+}
+
+function extractDescriptionField(description: string | null | undefined, label: string): string | null {
+  if (!description) return null;
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = description.match(new RegExp(`${escapedLabel}:\\s*(.+)`));
+  return match?.[1]?.trim() || null;
+}
+
+function getTransactionSummary(description: string | null | undefined, fallback: string): string {
+  if (!description) return fallback;
+
+  const cleaned = description
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter(
+      (line) =>
+        !line.startsWith("Recipient Account:") &&
+        !line.startsWith("Recipient Email:") &&
+        !line.startsWith("Bank Details:") &&
+        !line.startsWith("Bank Name:") &&
+        !line.startsWith("Address:") &&
+        !line.startsWith("Sort Code:")
+    )[0];
+
+  return cleaned || fallback;
 }
 
 export default function TransactionHistory() {
@@ -133,6 +160,13 @@ export default function TransactionHistory() {
               </TableHeader>
               <TableBody>
                 {transactions.map((txn) => (
+                  (() => {
+                    const recipientEmail = extractDescriptionField(txn.description, "Recipient Email");
+                    const summary = getTransactionSummary(
+                      txn.description,
+                      txn.transaction_type.charAt(0).toUpperCase() + txn.transaction_type.slice(1).replace("_", " ")
+                    );
+                    return (
                   <TableRow key={txn.id}>
                     <TableCell>{txn.id}</TableCell>
                     <TableCell className="capitalize">{txn.transaction_type}</TableCell>
@@ -141,8 +175,19 @@ export default function TransactionHistory() {
                     </TableCell>
                     <TableCell>{txn.category?.name || "N/A"}</TableCell>
                     <TableCell>{new Date(txn.timestamp).toLocaleDateString()}</TableCell>
-                    <TableCell>{txn.description || "N/A"}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div>{summary}</div>
+                        {txn.transaction_type === "wire_transfer" && recipientEmail && (
+                          <div className="text-xs text-muted-foreground break-all">
+                            Recipient Email: {recipientEmail}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
+                    );
+                  })()
                 ))}
               </TableBody>
             </Table>

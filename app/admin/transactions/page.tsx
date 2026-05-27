@@ -82,6 +82,13 @@ interface Category {
   name: string;
 }
 
+function extractDescriptionField(description: string | null | undefined, label: string): string | null {
+  if (!description) return null;
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = description.match(new RegExp(`${escapedLabel}:\\s*(.+)`));
+  return match?.[1]?.trim() || null;
+}
+
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -632,6 +639,9 @@ export default function AdminTransactionsPage() {
             </TableHeader>
             <TableBody>
               {transactions.map((transaction) => (
+                  (() => {
+                    const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+                    return (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-mono">{transaction.id}</TableCell>
                   <TableCell>
@@ -665,6 +675,15 @@ export default function AdminTransactionsPage() {
                         <div className="text-muted-foreground">
                           {transaction.recipient_account.user.first_name} {transaction.recipient_account.user.last_name}
                         </div>
+                      </div>
+                    ) : transaction.transaction_type === "wire_transfer" ? (
+                      <div className="text-sm">
+                        <div className="font-medium">External</div>
+                        {recipientEmail && (
+                          <div className="text-muted-foreground break-all">
+                            {recipientEmail}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       "-"
@@ -745,7 +764,9 @@ export default function AdminTransactionsPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+                    );
+                  })()
+                ))}
             </TableBody>
           </Table>
         </CardContent>
@@ -765,6 +786,9 @@ export default function AdminTransactionsPage() {
           </DialogHeader>
           {selectedTransaction && (
             <div className="space-y-4">
+              {(() => {
+                const recipientEmail = extractDescriptionField(selectedTransaction.description, "Recipient Email");
+                return (
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <div className="text-sm">
                   <span className="font-medium">Transaction ID:</span> {selectedTransaction.id}
@@ -787,7 +811,19 @@ export default function AdminTransactionsPage() {
                     <span className="font-medium">Recipient:</span> {selectedTransaction.recipient_account.account_number}
                   </div>
                 )}
+                {!selectedTransaction.recipient_account && selectedTransaction.transaction_type === "wire_transfer" && (
+                  <div className="text-sm">
+                    <span className="font-medium">Recipient:</span> External account
+                  </div>
+                )}
+                {recipientEmail && (
+                  <div className="text-sm">
+                    <span className="font-medium">Recipient Email:</span> <span className="break-all">{recipientEmail}</span>
+                  </div>
+                )}
               </div>
+                );
+              })()}
 
               {reviewAction === "reject" && (
                 <Alert variant="destructive">

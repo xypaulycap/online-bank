@@ -45,6 +45,7 @@ export default function WireTransferPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [sourceAccountId, setSourceAccountId] = useState<string>("");
   const [recipientAccountNumber, setRecipientAccountNumber] = useState<string>("");
+  const [recipientEmail, setRecipientEmail] = useState<string>("");
   const [bankName, setBankName] = useState<string>("");
   const [bankAddress, setBankAddress] = useState<string>("");
   const [sortCode, setSortCode] = useState<string>("");
@@ -110,11 +111,21 @@ export default function WireTransferPage() {
       return;
     }
     
-    if (!sourceAccountId || !recipientAccountNumber || !bankName || !bankAddress || !sortCode || !amount) {
+    if (!sourceAccountId || !recipientAccountNumber || !recipientEmail || !bankName || !bankAddress || !sortCode || !amount) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please fill in all required fields",
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid recipient email address",
       });
       return;
     }
@@ -158,6 +169,7 @@ export default function WireTransferPage() {
           description || 'Wire Transfer',
           categoryId ? parseInt(categoryId) : undefined,
           {
+            recipient_email: recipientEmail,
             bank_name: bankName,
             bank_address: bankAddress,
             sort_code: sortCode,
@@ -190,6 +202,7 @@ export default function WireTransferPage() {
         // Reset form and redirect
         setSourceAccountId("");
         setRecipientAccountNumber("");
+        setRecipientEmail("");
         setBankName("");
         setBankAddress("");
         setSortCode("");
@@ -242,6 +255,7 @@ export default function WireTransferPage() {
         // Reset form and redirect
         setSourceAccountId("");
         setRecipientAccountNumber("");
+        setRecipientEmail("");
         setBankName("");
         setBankAddress("");
         setSortCode("");
@@ -320,6 +334,21 @@ export default function WireTransferPage() {
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Enter the full account number of the recipient
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="recipient_email">Recipient Email</Label>
+              <Input
+                id="recipient_email"
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                placeholder="recipient@example.com"
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter the recipient&apos;s email address for this international transfer
               </p>
             </div>
 
@@ -411,6 +440,7 @@ export default function WireTransferPage() {
                 isLoading || 
                 !sourceAccountId || 
                 !recipientAccountNumber || 
+                !recipientEmail ||
                 !bankName || 
                 !bankAddress || 
                 !sortCode || 

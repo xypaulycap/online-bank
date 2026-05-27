@@ -62,7 +62,7 @@ interface Account {
 interface Transaction {
   id: number;
   account: number;
-  transaction_type: "deposit" | "withdrawal" | "transfer" | "payment";
+  transaction_type: "deposit" | "withdrawal" | "transfer" | "payment" | "local_transfer" | "wire_transfer";
   amount: string;
   description: string;
   category: { id: number; name: string; description: string } | null;
@@ -76,6 +76,33 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
+}
+
+function extractDescriptionField(description: string | null | undefined, label: string): string | null {
+  if (!description) return null;
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = description.match(new RegExp(`${escapedLabel}:\\s*(.+)`));
+  return match?.[1]?.trim() || null;
+}
+
+function getTransactionSummary(description: string | null | undefined, fallback: string): string {
+  if (!description) return fallback;
+
+  const cleaned = description
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter(
+      (line) =>
+        !line.startsWith("Recipient Account:") &&
+        !line.startsWith("Recipient Email:") &&
+        !line.startsWith("Bank Details:") &&
+        !line.startsWith("Bank Name:") &&
+        !line.startsWith("Address:") &&
+        !line.startsWith("Sort Code:")
+    )[0];
+
+  return cleaned || fallback;
 }
 
 export default function Dashboard() {
@@ -466,7 +493,14 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {recentTransactions.length > 0 ? (
-                      recentTransactions.map((transaction) => (
+                      recentTransactions.map((transaction) => {
+                        const fallbackLabel =
+                          transaction.transaction_type.charAt(0).toUpperCase() +
+                          transaction.transaction_type.slice(1).replace("_", " ");
+                        const summary = getTransactionSummary(transaction.description, fallbackLabel);
+                        const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+
+                        return (
                         <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                           <div className="flex items-center">
                             <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-3 ${
@@ -482,7 +516,7 @@ export default function Dashboard() {
                             </div>
                             <div>
                               <p className="font-medium">
-                                {transaction.description || transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1)}
+                                {summary}
                               </p>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {new Date(transaction.timestamp).toLocaleDateString('en-US', { 
@@ -493,6 +527,11 @@ export default function Dashboard() {
                                   minute: '2-digit'
                                 })}
                               </p>
+                              {transaction.transaction_type === "wire_transfer" && recipientEmail && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 break-all">
+                                  Recipient Email: {recipientEmail}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="text-right">
@@ -510,7 +549,8 @@ export default function Dashboard() {
                             )}
                           </div>
                         </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />

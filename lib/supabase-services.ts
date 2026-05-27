@@ -370,7 +370,7 @@ export const accountService = {
     return transaction
   },
 
-  wireTransfer: async (accountId: number, recipientAccountNumber: string, amount: number, description: string, pin: string, categoryId?: number, bankDetails?: { bank_name: string; bank_address: string; sort_code: string }) => {
+  wireTransfer: async (accountId: number, recipientAccountNumber: string, amount: number, description: string, pin: string, categoryId?: number, bankDetails?: { recipient_email?: string; bank_name: string; bank_address: string; sort_code: string }) => {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
@@ -432,7 +432,7 @@ export const accountService = {
     // Create transaction record with bank details in description
     // recipient_account_id is null for external wire transfers
     const fullDescription = bankDetails 
-      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
+      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nRecipient Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
       : `${description}\n\nRecipient Account: ${recipientAccountNumber}`
 
     const { data: transaction, error: txError } = await supabase
@@ -452,7 +452,7 @@ export const accountService = {
     return transaction
   },
 
-  createPendingWireTransfer: async (accountId: number, recipientAccountNumber: string, amount: number, description: string, categoryId?: number, bankDetails?: { bank_name: string; bank_address: string; sort_code: string }, pin?: string) => {
+  createPendingWireTransfer: async (accountId: number, recipientAccountNumber: string, amount: number, description: string, categoryId?: number, bankDetails?: { recipient_email?: string; bank_name: string; bank_address: string; sort_code: string }, pin?: string) => {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
@@ -507,7 +507,7 @@ export const accountService = {
     // For wire transfers, recipient is external (not in our database)
     // Store recipient account number and bank details in description
     const fullDescription = bankDetails 
-      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
+      ? `${description}\n\nRecipient Account: ${recipientAccountNumber}\nRecipient Email: ${bankDetails.recipient_email || 'N/A'}\nBank Details:\nBank Name: ${bankDetails.bank_name}\nAddress: ${bankDetails.bank_address}\nSort Code: ${bankDetails.sort_code}`
       : `${description}\n\nRecipient Account: ${recipientAccountNumber}`
 
     // Create transaction record with status: pending

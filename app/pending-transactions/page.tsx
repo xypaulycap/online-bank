@@ -50,6 +50,13 @@ interface PendingTransaction {
   } | null;
 }
 
+function extractDescriptionField(description: string | null | undefined, label: string): string | null {
+  if (!description) return null;
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = description.match(new RegExp(`${escapedLabel}:\\s*(.+)`));
+  return match?.[1]?.trim() || null;
+}
+
 export default function PendingTransactionsPage() {
   const [pendingTransactions, setPendingTransactions] = useState<PendingTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -296,6 +303,9 @@ export default function PendingTransactionsPage() {
               </TableHeader>
               <TableBody>
                 {pendingTransactions.filter(t => !t.status || t.status === 'pending').map((transaction) => (
+                  (() => {
+                    const recipientEmail = extractDescriptionField(transaction.description, "Recipient Email");
+                    return (
                   <TableRow key={transaction.id}>
                     <TableCell>
                       <Badge variant="outline">{transaction.transaction_type}</Badge>
@@ -307,8 +317,18 @@ export default function PendingTransactionsPage() {
                       {transaction.account.account_number}
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {transaction.recipient_account?.account_number || 
-                       (transaction.transaction_type === 'wire_transfer' ? 'External' : "-")}
+                      {transaction.recipient_account ? (
+                        transaction.recipient_account.account_number
+                      ) : transaction.transaction_type === 'wire_transfer' ? (
+                        <div className="space-y-1">
+                          <div>External</div>
+                          {recipientEmail && (
+                            <div className="font-normal text-muted-foreground break-all">
+                              {recipientEmail}
+                            </div>
+                          )}
+                        </div>
+                      ) : "-"}
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {transaction.description || "-"}
@@ -344,6 +364,8 @@ export default function PendingTransactionsPage() {
                       )}
                     </TableCell>
                   </TableRow>
+                    );
+                  })()
                 ))}
               </TableBody>
             </Table>
@@ -365,6 +387,9 @@ export default function PendingTransactionsPage() {
           </DialogHeader>
           {selectedTransaction && (
             <div className="space-y-4">
+              {(() => {
+                const recipientEmail = extractDescriptionField(selectedTransaction.description, "Recipient Email");
+                return (
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm font-medium mb-2">Transaction Details:</p>
                 <p className="text-sm">Amount: <span className="font-semibold">${parseFloat(selectedTransaction.amount).toFixed(2)}</span></p>
@@ -372,7 +397,15 @@ export default function PendingTransactionsPage() {
                 {selectedTransaction.recipient_account && (
                   <p className="text-sm">To: <span className="font-mono">{selectedTransaction.recipient_account.account_number}</span></p>
                 )}
+                {!selectedTransaction.recipient_account && selectedTransaction.transaction_type === "wire_transfer" && (
+                  <p className="text-sm">To: <span className="font-medium">External account</span></p>
+                )}
+                {recipientEmail && (
+                  <p className="text-sm">Recipient Email: <span className="font-medium break-all">{recipientEmail}</span></p>
+                )}
               </div>
+                );
+              })()}
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 {pinStep === 1 ? (
                   <div>
