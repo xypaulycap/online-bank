@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     console.log('Sending test email to:', to);
     await sendEmail({
       to,
-      subject: 'Test Email from Credix Vault Bank',
+      subject: 'Test Email from Valtier Finacial Group',
       html: `
         <!DOCTYPE html>
         <html>
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           </head>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <h1 style="color: #2563eb; margin-top: 0;">Credix Vault Bank</h1>
+              <h1 style="color: #2563eb; margin-top: 0;">Valtier Finacial Group</h1>
             </div>
             <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
               <h2 style="color: #1f2937; margin-top: 0;">Test Email</h2>

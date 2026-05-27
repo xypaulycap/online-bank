@@ -6,7 +6,7 @@ export function LandingFooter() {
       <div className="container mx-auto px-4">
         <div className="grid gap-8 md:grid-cols-4 mb-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">Credix Vault Bank</h3>
+            <h3 className="text-xl font-bold mb-4">Valtier Finacial Group</h3>
             <p className="text-gray-400 mb-4">
               Modern banking solutions for individuals and businesses.
             </p>
@@ -62,7 +62,7 @@ export function LandingFooter() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
-          <p>© {new Date().getFullYear()} Credix Vault Bank. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Valtier Finacial Group. All rights reserved.</p>
         </div>
       </div>
     </footer>

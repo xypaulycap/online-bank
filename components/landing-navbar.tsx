@@ -22,7 +22,7 @@ export function LandingNavbar() {
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Landmark className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">Credix Vault Bank</span>
+            <span className="hidden font-bold sm:inline-block">Valtier Finacial Group</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
@@ -50,7 +50,7 @@ export function LandingNavbar() {
               <div className="flex items-center justify-between p-4 border-b">
                  <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Landmark className="h-6 w-6" />
-                    <span className="font-bold">Credix Vault Bank</span>
+                    <span className="font-bold">Valtier Finacial Group</span>
                  </Link>
                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                     <X className="h-5 w-5" />

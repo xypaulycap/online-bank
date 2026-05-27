@@ -1,5 +1,5 @@
 -- ============================================================================
--- Complete Supabase schema for the pauly-sigbk project
+-- Complete Supabase schema for the Valtier Finacial Group project
 -- ============================================================================
 -- This file is intended to be safe to run on a fresh project and helpful on a
 -- partially-configured project. It includes:

@@ -36,7 +36,7 @@ export function LandingPage() {
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 lg:mb-6">
-                  Credix Vault Bank
+                  Valtier Finacial Group
                 </h1>
 
                 <p className="lg:hidden text-primary-100 text-lg font-medium mb-6">Your Digital Banking Partner</p>
@@ -144,10 +144,10 @@ export function LandingPage() {
             <div className="text-center mb-12 lg:mb-16">
               <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 text-primary-700 dark:text-primary-300 rounded-full text-sm font-semibold mb-4 shadow-lg backdrop-blur-sm border border-primary-200/50 dark:border-primary-700/50">
                 <i className="fa-solid fa-chart-line mr-2 animate-pulse"></i>
-                Credix Vault Bank Rates
+                Valtier Finacial Group Rates
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-gray-900 dark:from-white dark:via-primary-300 dark:to-white bg-clip-text text-transparent mb-4">
-                Credix Vault Bank Member Care
+                Valtier Finacial Group Member Care
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Discover competitive rates designed to help your money grow faster
@@ -189,7 +189,7 @@ export function LandingPage() {
                     <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 to-green-600 dark:from-teal-400 dark:to-green-400 bg-clip-text text-transparent mb-2">3.65%</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">APY*</div>
                     <div className="font-bold text-gray-900 dark:text-white mb-2 text-sm">18 MONTH CERTIFICATE</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Credix Vault Bank Certificate Rates</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Valtier Finacial Group Certificate Rates</div>
                   </div>
                   <div className="mt-4 text-center">
                     <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-teal-100 to-teal-200 dark:from-teal-900/30 dark:to-teal-800/30 text-teal-700 dark:text-teal-400 rounded-full text-xs font-bold shadow-sm">
@@ -211,7 +211,7 @@ export function LandingPage() {
                     <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-2">4.00%</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">APR*</div>
                     <div className="font-bold text-gray-900 dark:text-white mb-2 text-sm">CREDIT CARDS</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Credix Vault Bank Credit Card Rates</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Valtier Finacial Group Credit Card Rates</div>
                   </div>
                   <div className="mt-4 text-center">
                     <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 text-purple-700 dark:text-purple-400 rounded-full text-xs font-bold shadow-sm">
@@ -233,7 +233,7 @@ export function LandingPage() {
                     <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent mb-2">15.49%</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">APR*</div>
                     <div className="font-bold text-gray-900 dark:text-white mb-2 text-sm">LOANS</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Credix Vault Bank Standard Loan Rates</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Valtier Finacial Group Standard Loan Rates</div>
                   </div>
                   <div className="mt-4 text-center">
                     <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 text-orange-700 dark:text-orange-400 rounded-full text-xs font-bold shadow-sm">
@@ -287,7 +287,7 @@ export function LandingPage() {
                 { icon: "fa-home", title: "Loans", desc: "Get competitive rates on personal, auto, and home loans tailored to your financial goals." },
                 { icon: "fa-briefcase", title: "Business Banking", desc: "Comprehensive banking solutions designed to help your business thrive and grow." },
                 { icon: "fa-chart-pie", title: "Wealth & Retire", desc: "Plan for your future with our expert investment and retirement planning services." },
-                { icon: "fa-info-circle", title: "About Credix Vault Bank", desc: "Learn more about our commitment to exceptional banking services and community support." },
+                { icon: "fa-info-circle", title: "About Valtier Finacial Group", desc: "Learn more about our commitment to exceptional banking services and community support." },
               ].map((service, idx) => (
                 <div key={idx} className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 text-center transition-all duration-500 hover:bg-white/10 hover:-translate-y-2 border border-white/10 hover:border-white/20 hover:shadow-2xl hover:shadow-white/10">
                   <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl mb-6 mx-auto group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg backdrop-blur-sm border border-white/20 group-hover:border-white/30">
@@ -383,7 +383,7 @@ export function LandingPage() {
                 </h2>
 
                 <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Credix Vault Bank is a full-service credit union built on the foundation of providing our members with every step of their financial journey. We're committed to helping our members achieve their financial goals through personalized service and competitive rates.
+                  Valtier Finacial Group is a full-service credit union built on the foundation of providing our members with every step of their financial journey. We're committed to helping our members achieve their financial goals through personalized service and competitive rates.
                 </p>
 
                 <div className="space-y-4">
@@ -512,7 +512,7 @@ export function LandingPage() {
                     <div className="absolute inset-0 bg-white/20 rounded-2xl blur-lg group-hover:bg-white/30 transition-all duration-300"></div>
                     <Image
                       src="https://credix.deckmaxx.top/storage/app/public/photos/ld5cTft2xx1jZ1PGQFo5qM2UVT85tmHmm2YyddqC.png"
-                      alt="Credix Vault Bank"
+                      alt="Valtier Finacial Group"
                       width={120}
                       height={40}
                       className="relative h-10 w-auto"
@@ -586,7 +586,7 @@ export function LandingPage() {
             <div className="border-t border-primary-700/50 pt-8">
               <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
                 <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6">
-                  <p className="text-primary-100 text-sm">© 2026 Credix Vault Bank. All rights reserved.</p>
+                  <p className="text-primary-100 text-sm">© 2026 Valtier Finacial Group. All rights reserved.</p>
                   <div className="flex items-center space-x-2 text-primary-200 text-xs">
                     <i className="fa-solid fa-shield-alt text-green-400"></i>
                     <span>FDIC Insured</span>

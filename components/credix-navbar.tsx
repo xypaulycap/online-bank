@@ -65,7 +65,7 @@ export function CredixNavbar() {
                 <Link href="/">
                   <Image
                     src="https://credix.deckmaxx.top/storage/app/public/photos/ld5cTft2xx1jZ1PGQFo5qM2UVT85tmHmm2YyddqC.png"
-                    alt="Credix Vault Bank"
+                    alt="Valtier Finacial Group"
                     width={120}
                     height={40}
                     className="relative h-10 lg:h-10 w-auto"

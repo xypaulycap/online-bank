@@ -82,7 +82,7 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
                 <div className="h-8 w-8 rounded-md bg-emerald-500 flex items-center justify-center text-white mr-2">
                   <DollarSign className="h-5 w-5" />
                 </div>
-                <span>Credix Vault Bank</span>
+                <span>Valtier Finacial Group</span>
               </SheetTitle>
             </SheetHeader>
             <div className="py-4">
@@ -161,7 +161,7 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
             </div>
           </SheetContent>
         </Sheet>
-        <h1 className="text-xl font-semibold">Credix Vault Bank</h1>
+        <h1 className="text-xl font-semibold">Valtier Finacial Group</h1>
         <div className="flex items-center space-x-2">
           <ThemeToggle />
           <DropdownMenu>
@@ -200,7 +200,7 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
             <div className="h-8 w-8 rounded-md bg-emerald-500 flex items-center justify-center text-white mr-2">
               <DollarSign className="h-5 w-5" />
             </div>
-            <h1 className="text-xl font-bold">Credix Vault Bank</h1>
+            <h1 className="text-xl font-bold">Valtier Finacial Group</h1>
           </div>
           <nav className="flex-1">
             <div className="space-y-1">

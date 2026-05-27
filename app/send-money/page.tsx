@@ -161,7 +161,7 @@ export default function LoansCreditPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900 dark:text-white">
-                Why Choose Credix Vault Bank for Loans?
+                Why Choose Valtier Finacial Group for Loans?
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                 We're committed to providing you with the best loan options and terms. Our team of lending specialists works with you to find the right solution for your needs.

@@ -39,7 +39,7 @@ export default function PersonalBankingPage() {
                 Your Personal Banking Partner
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                At Credix Vault Bank, we understand that personal banking needs vary from person to person. That's why we offer a range of services and products tailored to help you achieve your individual financial goals.
+                At Valtier Finacial Group, we understand that personal banking needs vary from person to person. That's why we offer a range of services and products tailored to help you achieve your individual financial goals.
               </p>
               <div className="space-y-4">
                 {[
