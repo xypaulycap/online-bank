@@ -1,5 +1,24 @@
 import { supabase } from './supabase'
 
+type TransferPinProfile = {
+  transfer_pin?: string | null
+  transfer_pin_2?: string | null
+  can_transfer?: boolean | null
+}
+
+function encodeTransferPin(pin: string) {
+  return typeof window !== 'undefined'
+    ? btoa(pin)
+    : Buffer.from(pin).toString('base64')
+}
+
+function resolveTransferPins(profile: TransferPinProfile) {
+  const primaryPin = profile.transfer_pin || profile.transfer_pin_2 || null
+  const secondaryPin = profile.transfer_pin ? (profile.transfer_pin_2 || null) : null
+
+  return { primaryPin, secondaryPin }
+}
+
 // Types
 export interface User {
   id: string
@@ -122,7 +141,7 @@ export const userService = {
       last_name: profile?.last_name || '',
       currency: profile?.currency || 'USD',
       can_transfer: profile?.can_transfer !== undefined ? profile.can_transfer : true,
-      has_pin_2: !!profile?.transfer_pin_2,
+      has_pin_2: !!profile?.transfer_pin && !!profile?.transfer_pin_2,
     }
   },
 
@@ -378,7 +397,7 @@ export const accountService = {
     // Check if user has transfer permission
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('transfer_pin, can_transfer')
+      .select('transfer_pin, transfer_pin_2, can_transfer')
       .eq('id', user.id)
       .single()
 
@@ -386,16 +405,15 @@ export const accountService = {
     if (profile?.can_transfer === false) {
       throw new Error('TRANSFER_DISABLED')
     }
-    if (!profile.transfer_pin) {
+    const { primaryPin } = resolveTransferPins(profile)
+    if (!primaryPin) {
       throw new Error('Transfer PIN not set. Please contact admin to set your PIN.')
     }
 
     // Verify PIN (decode and compare)
-    const hashedPin = typeof window !== 'undefined' 
-      ? btoa(pin) 
-      : Buffer.from(pin).toString('base64')
+    const hashedPin = encodeTransferPin(pin)
     
-    if (hashedPin !== profile.transfer_pin) {
+    if (hashedPin !== primaryPin) {
       throw new Error('Invalid PIN. Please try again.')
     }
 
@@ -460,7 +478,7 @@ export const accountService = {
     // Check if user has transfer permission
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('can_transfer, transfer_pin')
+      .select('can_transfer, transfer_pin, transfer_pin_2')
       .eq('id', user.id)
       .single()
 
@@ -471,14 +489,13 @@ export const accountService = {
 
     let verificationStep = 0;
     if (pin) {
-       if (!profile.transfer_pin) {
+       const { primaryPin } = resolveTransferPins(profile)
+       if (!primaryPin) {
           throw new Error('Transfer PIN not set. Please contact admin to set your PIN.')
        }
-       const hashedPin = typeof window !== 'undefined' 
-        ? btoa(pin) 
-        : Buffer.from(pin).toString('base64')
+       const hashedPin = encodeTransferPin(pin)
        
-       if (hashedPin !== profile.transfer_pin) {
+       if (hashedPin !== primaryPin) {
           throw new Error('Invalid PIN. Please try again.')
        }
        verificationStep = 1;
@@ -562,20 +579,19 @@ export const accountService = {
     if (profile?.can_transfer === false) {
       throw new Error('TRANSFER_DISABLED')
     }
-    if (!profile.transfer_pin) {
+    const { primaryPin, secondaryPin } = resolveTransferPins(profile)
+    if (!primaryPin) {
       throw new Error('Transfer PIN not set. Please contact admin to set your PIN.')
     }
 
     // Check verification step
     // If step is 1, user has already verified PIN 1. We expect 'pin' arg to be PIN 2.
     if (transaction.verification_step === 1) {
-      if (profile.transfer_pin_2) {
+      if (secondaryPin) {
         // Verify PIN 2
-        const hashedPin2 = typeof window !== 'undefined' 
-          ? btoa(pin) 
-          : Buffer.from(pin).toString('base64')
+        const hashedPin2 = encodeTransferPin(pin)
         
-        if (hashedPin2 !== profile.transfer_pin_2) {
+        if (hashedPin2 !== secondaryPin) {
           throw new Error('Invalid Second PIN. Please try again.')
         }
       }
@@ -583,24 +599,20 @@ export const accountService = {
     } else {
       // Step 0: Standard verification
       // Verify PIN 1
-      const hashedPin = typeof window !== 'undefined' 
-        ? btoa(pin) 
-        : Buffer.from(pin).toString('base64')
+      const hashedPin = encodeTransferPin(pin)
       
-      if (hashedPin !== profile.transfer_pin) {
+      if (hashedPin !== primaryPin) {
         throw new Error('Invalid PIN. Please try again.')
       }
 
       // Verify PIN 2 if set
-      if (profile.transfer_pin_2) {
+      if (secondaryPin) {
         if (!pin2) {
           throw new Error('Second PIN is required.')
         }
-        const hashedPin2 = typeof window !== 'undefined' 
-          ? btoa(pin2) 
-          : Buffer.from(pin2).toString('base64')
+        const hashedPin2 = encodeTransferPin(pin2)
         
-        if (hashedPin2 !== profile.transfer_pin_2) {
+        if (hashedPin2 !== secondaryPin) {
           throw new Error('Invalid Second PIN. Please try again.')
         }
       }
