@@ -244,7 +244,8 @@ ALTER TABLE public.transactions
       'transfer',
       'payment',
       'local_transfer',
-      'wire_transfer'
+      'wire_transfer',
+      'international_transfer'
     )
   );
 

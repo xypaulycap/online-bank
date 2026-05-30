@@ -548,6 +548,134 @@ export const accountService = {
     return transaction.id
   },
 
+  createPendingInternationalTransfer: async (accountId: number, amount: number, description: string, categoryId?: number, bankDetails?: { recipient_name: string; recipient_address: string; bank_name: string; bank_address: string; account_number: string; routing_number: string; swift_bic: string; transfer_reference?: string }, pin?: string) => {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    // Check if user has transfer permission
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('can_transfer, transfer_pin, transfer_pin_2')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) throw profileError
+    if (profile?.can_transfer === false) {
+      throw new Error('TRANSFER_DISABLED')
+    }
+
+    let verificationStep = 0;
+    if (pin) {
+       const { primaryPin } = resolveTransferPins(profile)
+       if (!primaryPin) {
+          throw new Error('Transfer PIN not set. Please contact admin to set your PIN.')
+       }
+       const hashedPin = encodeTransferPin(pin)
+       
+       if (hashedPin !== primaryPin) {
+          throw new Error('Invalid PIN. Please try again.')
+       }
+       verificationStep = 1;
+    }
+
+    const { data: sourceAccountData, error: sourceAccountError } = await supabase
+      .from('accounts')
+      .select('id, balance, user_id')
+      .eq('id', accountId)
+      .single()
+
+    if (sourceAccountError || !sourceAccountData) throw new Error('Source account not found')
+    if (sourceAccountData.user_id !== user.id) throw new Error('Unauthorized: Account does not belong to you')
+    if (parseFloat(sourceAccountData.balance.toString()) < amount) throw new Error('Insufficient funds')
+
+    const fullDescription = bankDetails 
+      ? `${description}\n\nRecipient Name: ${bankDetails.recipient_name}\nRecipient Address: ${bankDetails.recipient_address}\nBank Name: ${bankDetails.bank_name}\nBank Address: ${bankDetails.bank_address}\nAccount Number: ${bankDetails.account_number}\nRouting Number: ${bankDetails.routing_number}\nSWIFT/BIC: ${bankDetails.swift_bic}\nTransfer Reference: ${bankDetails.transfer_reference || 'N/A'}`
+      : description;
+
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        account_id: accountId,
+        transaction_type: 'international_transfer',
+        amount,
+        description: fullDescription,
+        category_id: categoryId || null,
+        recipient_account_id: null,
+        status: 'pending',
+        verification_step: verificationStep
+      })
+      .select()
+      .single()
+
+    if (txError) throw txError
+    return transaction.id
+  },
+
+  createPendingLocalTransfer: async (accountId: number, amount: number, description: string, categoryId?: number, bankDetails?: { bank_name: string; bank_address: string; recipient_address: string; recipient_name: string; swiss_iban: string; reference_number?: string; message?: string }, pin?: string) => {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    // Check if user has transfer permission
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('can_transfer, transfer_pin, transfer_pin_2')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) throw profileError
+    if (profile?.can_transfer === false) {
+      throw new Error('TRANSFER_DISABLED')
+    }
+
+    let verificationStep = 0;
+    if (pin) {
+       const { primaryPin } = resolveTransferPins(profile)
+       if (!primaryPin) {
+          throw new Error('Transfer PIN not set. Please contact admin to set your PIN.')
+       }
+       const hashedPin = encodeTransferPin(pin)
+       
+       if (hashedPin !== primaryPin) {
+          throw new Error('Invalid PIN. Please try again.')
+       }
+       verificationStep = 1;
+    }
+
+    const { data: sourceAccountData, error: sourceAccountError } = await supabase
+      .from('accounts')
+      .select('id, balance, user_id')
+      .eq('id', accountId)
+      .single()
+
+    if (sourceAccountError || !sourceAccountData) throw new Error('Source account not found')
+    if (sourceAccountData.user_id !== user.id) throw new Error('Unauthorized: Account does not belong to you')
+    if (parseFloat(sourceAccountData.balance.toString()) < amount) throw new Error('Insufficient funds')
+
+    const fullDescription = bankDetails 
+      ? `${description}\n\nBank Name: ${bankDetails.bank_name}\nBank Address: ${bankDetails.bank_address}\nRecipient Address: ${bankDetails.recipient_address}\nRecipient Name: ${bankDetails.recipient_name}\nSwiss IBAN: ${bankDetails.swiss_iban}\nReference Number: ${bankDetails.reference_number || 'N/A'}\nMessage: ${bankDetails.message || 'N/A'}`
+      : description;
+
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        account_id: accountId,
+        transaction_type: 'local_transfer',
+        amount,
+        description: fullDescription,
+        category_id: categoryId || null,
+        recipient_account_id: null,
+        status: 'pending',
+        verification_step: verificationStep
+      })
+      .select()
+      .single()
+
+    if (txError) throw txError
+    return transaction.id
+  },
+
   completePendingWireTransfer: async (transactionId: number, pin: string, pin2?: string) => {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -640,7 +768,8 @@ export const accountService = {
 
     // For wire transfers, recipient is external - only debit source account
     // For local transfers, we would credit the recipient account, but wire transfers are external
-    if (transaction.transaction_type === 'wire_transfer') {
+    if (['wire_transfer', 'international_transfer'].includes(transaction.transaction_type) || 
+        (transaction.transaction_type === 'local_transfer' && !transaction.recipient_account_id)) {
       // Only debit source account (recipient is external)
       const newSourceBalance = parseFloat(account.balance.toString()) - parseFloat(transaction.amount.toString())
       const { error: sourceError } = await supabase

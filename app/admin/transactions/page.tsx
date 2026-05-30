@@ -306,9 +306,10 @@ export default function AdminTransactionsPage() {
       return;
     }
 
-    // Require PIN for local_transfer and wire_transfer
+    // Require PIN for local_transfer, wire_transfer, and international_transfer
     if ((createForm.transaction_type === "local_transfer" || 
-         createForm.transaction_type === "wire_transfer") && 
+         createForm.transaction_type === "wire_transfer" ||
+         createForm.transaction_type === "international_transfer") && 
         (!createForm.pin || createForm.pin.length !== 4)) {
       toast({
         variant: "destructive",
@@ -331,7 +332,7 @@ export default function AdminTransactionsPage() {
       setIsCreating(true);
       await adminTransactionService.createTransaction({
         account_id: parseInt(createForm.account_id),
-        transaction_type: createForm.transaction_type as 'deposit' | 'withdrawal' | 'transfer' | 'payment' | 'local_transfer' | 'wire_transfer',
+        transaction_type: createForm.transaction_type as 'deposit' | 'withdrawal' | 'transfer' | 'payment' | 'local_transfer' | 'wire_transfer' | 'international_transfer',
         amount: parseFloat(createForm.amount),
         description: createForm.description || undefined,
         category_id: createForm.category_id ? parseInt(createForm.category_id) : null,
@@ -341,7 +342,7 @@ export default function AdminTransactionsPage() {
            createForm.transaction_type === "payment") && createForm.recipient_account_id
             ? parseInt(createForm.recipient_account_id)
             : null, // Wire transfers are external, so recipient_account_id is null
-        pin: (createForm.transaction_type === "local_transfer" || createForm.transaction_type === "wire_transfer") 
+        pin: (createForm.transaction_type === "local_transfer" || createForm.transaction_type === "wire_transfer" || createForm.transaction_type === "international_transfer") 
           ? createForm.pin 
           : undefined,
       });
@@ -408,6 +409,7 @@ export default function AdminTransactionsPage() {
               <SelectItem value="transfer">Transfers</SelectItem>
               <SelectItem value="local_transfer">Local Transfers</SelectItem>
               <SelectItem value="wire_transfer">Wire Transfers</SelectItem>
+              <SelectItem value="international_transfer">International Transfers</SelectItem>
               <SelectItem value="payment">Payments</SelectItem>
             </SelectContent>
           </Select>
@@ -468,6 +470,7 @@ export default function AdminTransactionsPage() {
                       <SelectItem value="transfer">Transfer (Legacy)</SelectItem>
                       <SelectItem value="local_transfer">Local Transfer (Requires PIN)</SelectItem>
                       <SelectItem value="wire_transfer">Wire Transfer (Requires PIN)</SelectItem>
+                      <SelectItem value="international_transfer">International Transfer (Requires PIN)</SelectItem>
                       <SelectItem value="payment">Payment</SelectItem>
                     </SelectContent>
                   </Select>
@@ -496,7 +499,6 @@ export default function AdminTransactionsPage() {
                 </div>
 
                 {(createForm.transaction_type === "transfer" || 
-                  createForm.transaction_type === "local_transfer" || 
                   createForm.transaction_type === "payment") && (
                   <div>
                     <Label>Recipient Account {createForm.transaction_type === "payment" ? "(Optional)" : "(Required)"}</Label>
@@ -522,17 +524,18 @@ export default function AdminTransactionsPage() {
                     </Select>
                   </div>
                 )}
-                {createForm.transaction_type === "wire_transfer" && (
+                {(createForm.transaction_type === "wire_transfer" || createForm.transaction_type === "international_transfer" || createForm.transaction_type === "local_transfer") && (
                   <div>
                     <Label>Recipient Account (External - Optional)</Label>
                     <p className="text-xs text-muted-foreground mb-2">
-                      Wire transfers are to external banks. Recipient account is stored in the transaction description.
+                      These transfers are to external banks. Recipient account is stored in the transaction description.
                     </p>
                   </div>
                 )}
 
                 {(createForm.transaction_type === "local_transfer" || 
-                  createForm.transaction_type === "wire_transfer") && (
+                  createForm.transaction_type === "wire_transfer" ||
+                  createForm.transaction_type === "international_transfer") && (
                   <div>
                     <Label>4-Digit PIN (Required)</Label>
                     <Input
@@ -607,12 +610,11 @@ export default function AdminTransactionsPage() {
                     isCreating ||
                     !createForm.account_id ||
                     !createForm.amount ||
-                    ((createForm.transaction_type === "transfer" || 
-                      createForm.transaction_type === "local_transfer" || 
-                      createForm.transaction_type === "wire_transfer") && 
+                    (createForm.transaction_type === "transfer" && 
                      !createForm.recipient_account_id) ||
                     ((createForm.transaction_type === "local_transfer" || 
-                      createForm.transaction_type === "wire_transfer") && 
+                      createForm.transaction_type === "wire_transfer" ||
+                      createForm.transaction_type === "international_transfer") && 
                      createForm.pin.length !== 4)
                   }
                 >
@@ -683,7 +685,7 @@ export default function AdminTransactionsPage() {
                           {transaction.recipient_account.user.first_name} {transaction.recipient_account.user.last_name}
                         </div>
                       </div>
-                    ) : transaction.transaction_type === "wire_transfer" ? (
+                    ) : (transaction.transaction_type === "wire_transfer" || transaction.transaction_type === "international_transfer" || transaction.transaction_type === "local_transfer") ? (
                       <div className="text-sm">
                         <div className="font-medium">External</div>
                         {recipientEmail && (
@@ -818,7 +820,7 @@ export default function AdminTransactionsPage() {
                     <span className="font-medium">Recipient:</span> {selectedTransaction.recipient_account.account_number}
                   </div>
                 )}
-                {!selectedTransaction.recipient_account && selectedTransaction.transaction_type === "wire_transfer" && (
+                {!selectedTransaction.recipient_account && (selectedTransaction.transaction_type === "wire_transfer" || selectedTransaction.transaction_type === "international_transfer" || selectedTransaction.transaction_type === "local_transfer") && (
                   <div className="text-sm">
                     <span className="font-medium">Recipient:</span> External account
                   </div>

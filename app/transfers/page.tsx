@@ -41,21 +41,29 @@ export default function Transactions() {
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
-  const [withdrawalMethod, setWithdrawalMethod] = useState<string>("");
-  const [cashappHandle, setCashappHandle] = useState<string>("");
+
+  // Common Bank Fields
+  const [bankName, setBankName] = useState<string>("");
+  const [bankAddress, setBankAddress] = useState<string>("");
+  const [recipientName, setRecipientName] = useState<string>("");
+  const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [routingNumber, setRoutingNumber] = useState<string>("");
-  const [iban, setIban] = useState<string>("");
-  const [sortCode, setSortCode] = useState<string>("");
+  const [swiftBic, setSwiftBic] = useState<string>("");
+  const [transferReference, setTransferReference] = useState<string>("");
+
+  // Local Transfer specific
+  const [swissIban, setSwissIban] = useState<string>("");
+  const [referenceNumber, setReferenceNumber] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  
+  const [transferPin, setTransferPin] = useState<string>("");
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
-  const [otpCode, setOtpCode] = useState<string>("");
-  const [otpStage, setOtpStage] = useState<number>(1);
-  const [transactionId, setTransactionId] = useState<number | null>(null);
-  const [withdrawalStatus, setWithdrawalStatus] = useState<string>("");
   const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
   const [user, setUser] = useState<{ can_transfer?: boolean } | null>(null);
+  
   const router = useRouter();
   const { toast } = useToast();
 
@@ -98,11 +106,10 @@ export default function Transactions() {
     fetchData();
   }, [router, toast]);
 
-  const handleSubmit = async (e: React.FormEvent, action: 'deposit' | 'withdraw' | 'transfer') => {
+  const handleSubmit = async (e: React.FormEvent, action: 'transfer' | 'local_transfer' | 'international_transfer') => {
     e.preventDefault();
     
-    // Check if transfer is disabled for this user
-    if (action === 'transfer' && user?.can_transfer === false) {
+    if (user?.can_transfer === false) {
       setIsWarningDialogOpen(true);
       return;
     }
@@ -117,7 +124,7 @@ export default function Transactions() {
         return;
       }
 
-      if (!sourceAccountId || !amount || (action === 'transfer' && !recipientAccountId)) {
+      if (!sourceAccountId || !amount) {
         throw new Error("Please fill in all required fields");
       }
 
@@ -126,113 +133,69 @@ export default function Transactions() {
         throw new Error("Amount must be a positive number");
       }
 
-      if (action === 'transfer' && sourceAccountId === recipientAccountId) {
-        throw new Error("Source and recipient accounts must be different");
-      }
-
-      if (action === 'withdraw') {
-        if (!withdrawalMethod) {
-          throw new Error("Please select a withdrawal method");
-        }
-        if (withdrawalMethod === 'cashapp' && !cashappHandle) {
-          throw new Error("Cash App handle is required");
-        }
-        if (withdrawalMethod === 'local' && (!accountNumber || !routingNumber)) {
-          throw new Error("Account number and routing number are required");
-        }
-        if (withdrawalMethod === 'international' && (!iban || !sortCode)) {
-          throw new Error("IBAN and sort code are required");
-        }
-      }
-
       const accountIdNum = parseInt(sourceAccountId);
       const categoryIdNum = categoryId ? parseInt(categoryId) : undefined;
 
-      let data;
-      if (action === 'deposit') {
-        data = await accountService.deposit(accountIdNum, amountNum, description || 'Deposit', categoryIdNum);
-      } else if (action === 'withdraw') {
-        const bankDetails = {
-          method: withdrawalMethod,
-          cashapp_handle: withdrawalMethod === 'cashapp' ? cashappHandle : null,
-          account_number: withdrawalMethod === 'local' ? accountNumber : null,
-          routing_number: withdrawalMethod === 'local' ? routingNumber : null,
-          iban: withdrawalMethod === 'international' ? iban : null,
-          sort_code: withdrawalMethod === 'international' ? sortCode : null,
-        };
-        data = await accountService.withdraw(accountIdNum, amountNum, description || 'Withdrawal', categoryIdNum, bankDetails);
-      } else if (action === 'transfer') {
-        data = await accountService.transfer(accountIdNum, parseInt(recipientAccountId), amountNum, description || 'Transfer', categoryIdNum);
-      } else {
-        throw new Error('Invalid action');
-      }
-
-      if (action === 'withdraw' && data.transaction_id) {
-        setTransactionId(data.transaction_id);
-        setWithdrawalStatus(data.status || 'pending');
-        setOtpStage(1);
-        setOtpDialogOpen(true);
-      } else {
+      if (action === 'transfer') {
+        if (!recipientAccountId) throw new Error("Please select a recipient account");
+        if (sourceAccountId === recipientAccountId) throw new Error("Source and recipient accounts must be different");
+        
+        await accountService.transfer(accountIdNum, parseInt(recipientAccountId), amountNum, description || 'Internal Transfer', categoryIdNum);
+        
         toast({
           title: "Success",
-          description: `${action.charAt(0).toUpperCase() + action.slice(1)} completed successfully`,
+          description: "Internal transfer completed successfully",
         });
+        
+        router.push("/dashboard");
 
-        setAmount("");
-        setDescription("");
-        setCategoryId("");
-        setSourceAccountId("");
-        setRecipientAccountId("");
+      } else if (action === 'local_transfer') {
+        if (!bankName || !bankAddress || !recipientAddress || !recipientName || !swissIban || !transferPin) {
+          throw new Error("Please fill in all required fields including your PIN");
+        }
+        
+        const bankDetails = {
+          bank_name: bankName,
+          bank_address: bankAddress,
+          recipient_address: recipientAddress,
+          recipient_name: recipientName,
+          swiss_iban: swissIban,
+          reference_number: referenceNumber,
+          message: message
+        };
+        
+        await accountService.createPendingLocalTransfer(accountIdNum, amountNum, description || 'Local Transfer', categoryIdNum, bankDetails, transferPin);
+        
+        toast({
+          title: "Transfer Initiated",
+          description: "Your local transfer is pending approval.",
+        });
+        router.push("/dashboard");
+
+      } else if (action === 'international_transfer') {
+        if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !routingNumber || !swiftBic || !transferPin) {
+          throw new Error("Please fill in all required fields including your PIN");
+        }
+
+        const bankDetails = {
+          recipient_name: recipientName,
+          recipient_address: recipientAddress,
+          bank_name: bankName,
+          bank_address: bankAddress,
+          account_number: accountNumber,
+          routing_number: routingNumber,
+          swift_bic: swiftBic,
+          transfer_reference: transferReference
+        };
+
+        await accountService.createPendingInternationalTransfer(accountIdNum, amountNum, description || 'International Transfer', categoryIdNum, bankDetails, transferPin);
+
+        toast({
+          title: "Transfer Initiated",
+          description: "Your international transfer is pending approval.",
+        });
         router.push("/dashboard");
       }
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !transactionId) {
-        throw new Error("Session expired. Please try again.");
-      }
-
-      // Note: OTP verification would need to be implemented via Supabase Edge Functions
-      // or a separate verification service. For now, we'll simulate success.
-      // In production, you would call a Supabase Edge Function here.
-      
-      // Simulate OTP verification - replace with actual Supabase Edge Function call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setOtpDialogOpen(false);
-      toast({
-        title: "OTP Verification Complete",
-        description: "Your withdrawal is being processed.",
-      });
-      setAmount("");
-      setDescription("");
-      setCategoryId("");
-      setSourceAccountId("");
-      setRecipientAccountId("");
-      setWithdrawalMethod("");
-      setCashappHandle("");
-      setAccountNumber("");
-      setRoutingNumber("");
-      setIban("");
-      setSortCode("");
-      setTransactionId(null);
-      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -249,7 +212,7 @@ export default function Transactions() {
     <div className="min-h-screen bg-background p-4 md:p-6">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Account Transactions</CardTitle>
+          <CardTitle>Transfer Funds</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -259,12 +222,13 @@ export default function Transactions() {
           )}
           <Tabs defaultValue="transfer">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="transfer">Transfer</TabsTrigger>
-              <TabsTrigger value="deposit">Deposit</TabsTrigger>
-              <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+              <TabsTrigger value="transfer">Internal</TabsTrigger>
+              <TabsTrigger value="local_transfer">Local</TabsTrigger>
+              <TabsTrigger value="international_transfer">International</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="transfer">
-              <form onSubmit={(e) => handleSubmit(e, 'transfer')} className="space-y-4">
+              <form onSubmit={(e) => handleSubmit(e, 'transfer')} className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="source_account">Source Account</Label>
                   <Select value={sourceAccountId} onValueChange={setSourceAccountId} required>
@@ -341,13 +305,14 @@ export default function Transactions() {
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="deposit">
-              <form onSubmit={(e) => handleSubmit(e, 'deposit')} className="space-y-4">
+
+            <TabsContent value="local_transfer">
+              <form onSubmit={(e) => handleSubmit(e, 'local_transfer')} className="space-y-4 mt-4">
                 <div>
-                  <Label htmlFor="source_account">Account</Label>
+                  <Label htmlFor="source_account_local">Source Account</Label>
                   <Select value={sourceAccountId} onValueChange={setSourceAccountId} required>
-                    <SelectTrigger id="source_account">
-                      <SelectValue placeholder="Select account" />
+                    <SelectTrigger id="source_account_local">
+                      <SelectValue placeholder="Select source account" />
                     </SelectTrigger>
                     <SelectContent>
                       {accounts.map((account) => (
@@ -360,9 +325,9 @@ export default function Transactions() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="amount_local">Amount</Label>
                   <Input
-                    id="amount"
+                    id="amount_local"
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -372,42 +337,79 @@ export default function Transactions() {
                     required
                   />
                 </div>
+                
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Bank Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="bank_name_local">Bank Name</Label>
+                    <Input id="bank_name_local" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Enter bank name" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="bank_address_local">Bank Address</Label>
+                    <Input id="bank_address_local" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} placeholder="Enter bank address" required />
+                  </div>
+                </div>
+
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Recipient Information</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="recipient_name_local">Recipient Name</Label>
+                    <Input id="recipient_name_local" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Enter recipient name" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipient_address_local">Recipient Address</Label>
+                    <Input id="recipient_address_local" value={recipientAddress} onChange={(e) => setRecipientAddress(e.target.value)} placeholder="Enter recipient address" required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="swiss_iban">Swiss IBAN (CHxx xxxx xxxx xxxx xxxx x)</Label>
+                    <Input id="swiss_iban" value={swissIban} onChange={(e) => setSwissIban(e.target.value)} placeholder="Enter Swiss IBAN" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="reference_number">Reference Number (Optional)</Label>
+                    <Input id="reference_number" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} placeholder="Enter reference number" />
+                  </div>
+                  <div>
+                    <Label htmlFor="message">Message (Optional)</Label>
+                    <Input id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Enter message" />
+                  </div>
+                </div>
+
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Authorization</h3>
+                </div>
+
                 <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Label htmlFor="transfer_pin_local">Transfer PIN</Label>
                   <Input
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter description"
+                    id="transfer_pin_local"
+                    type="password"
+                    maxLength={4}
+                    value={transferPin}
+                    onChange={(e) => setTransferPin(e.target.value)}
+                    placeholder="Enter your 4-digit PIN"
+                    required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="category">Category (Optional)</Label>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
                 <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? "Depositing..." : "Deposit"}
+                  {isLoading ? "Initiating Transfer..." : "Transfer"}
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="withdraw">
-              <form onSubmit={(e) => handleSubmit(e, 'withdraw')} className="space-y-4">
+
+            <TabsContent value="international_transfer">
+              <form onSubmit={(e) => handleSubmit(e, 'international_transfer')} className="space-y-4 mt-4">
                 <div>
-                  <Label htmlFor="source_account">Account</Label>
+                  <Label htmlFor="source_account_intl">Source Account</Label>
                   <Select value={sourceAccountId} onValueChange={setSourceAccountId} required>
-                    <SelectTrigger id="source_account">
-                      <SelectValue placeholder="Select account" />
+                    <SelectTrigger id="source_account_intl">
+                      <SelectValue placeholder="Select source account" />
                     </SelectTrigger>
                     <SelectContent>
                       {accounts.map((account) => (
@@ -420,9 +422,9 @@ export default function Transactions() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="amount_intl">Amount</Label>
                   <Input
-                    id="amount"
+                    id="amount_intl"
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -432,142 +434,78 @@ export default function Transactions() {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="withdrawal_method">Withdrawal Method</Label>
-                  <Select value={withdrawalMethod} onValueChange={setWithdrawalMethod} required>
-                    <SelectTrigger id="withdrawal_method">
-                      <SelectValue placeholder="Select withdrawal method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cashapp">Cash App</SelectItem>
-                      <SelectItem value="local">Local Bank</SelectItem>
-                      <SelectItem value="international">International Bank</SelectItem>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Bank Information</h3>
                 </div>
-                {withdrawalMethod === 'cashapp' && (
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="cashapp_handle">Cash App Handle</Label>
-                    <Input
-                      id="cashapp_handle"
-                      value={cashappHandle}
-                      onChange={(e) => setCashappHandle(e.target.value)}
-                      placeholder="Enter Cash App handle (e.g., $username)"
-                      required
-                    />
+                    <Label htmlFor="bank_name_intl">Bank Name</Label>
+                    <Input id="bank_name_intl" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Enter bank name" required />
                   </div>
-                )}
-                {withdrawalMethod === 'local' && (
-                  <>
-                    <div>
-                      <Label htmlFor="account_number">Account Number</Label>
-                      <Input
-                        id="account_number"
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="Enter account number"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="routing_number">Routing Number</Label>
-                      <Input
-                        id="routing_number"
-                        value={routingNumber}
-                        onChange={(e) => setRoutingNumber(e.target.value)}
-                        placeholder="Enter routing number"
-                        required
-                      />
-                    </div>
-                  </>
-                )}
-                {withdrawalMethod === 'international' && (
-                  <>
-                    <div>
-                      <Label htmlFor="iban">IBAN</Label>
-                      <Input
-                        id="iban"
-                        value={iban}
-                        onChange={(e) => setIban(e.target.value)}
-                        placeholder="Enter IBAN"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="sort_code">Sort Code</Label>
-                      <Input
-                        id="sort_code"
-                        value={sortCode}
-                        onChange={(e) => setSortCode(e.target.value)}
-                        placeholder="Enter sort code"
-                        required
-                      />
-                    </div>
-                  </>
-                )}
+                  <div>
+                    <Label htmlFor="bank_address_intl">Bank Address</Label>
+                    <Input id="bank_address_intl" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} placeholder="Enter bank address" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="routing_number_intl">Routing Number</Label>
+                    <Input id="routing_number_intl" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="Enter routing number" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="swift_bic">SWIFT/BIC</Label>
+                    <Input id="swift_bic" value={swiftBic} onChange={(e) => setSwiftBic(e.target.value)} placeholder="Enter SWIFT or BIC" required />
+                  </div>
+                </div>
+
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Recipient Information</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="recipient_name_intl">Recipient Name</Label>
+                    <Input id="recipient_name_intl" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Enter recipient name" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipient_address_intl">Recipient Address</Label>
+                    <Input id="recipient_address_intl" value={recipientAddress} onChange={(e) => setRecipientAddress(e.target.value)} placeholder="Enter recipient address" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="account_number_intl">Account Number</Label>
+                    <Input id="account_number_intl" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="transfer_reference">Transfer Reference (Optional)</Label>
+                    <Input id="transfer_reference" value={transferReference} onChange={(e) => setTransferReference(e.target.value)} placeholder="Enter reference" />
+                  </div>
+                </div>
+
+                <div className="pt-4 pb-2 border-b border-border">
+                  <h3 className="font-medium text-sm text-muted-foreground">Authorization</h3>
+                </div>
+
                 <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Label htmlFor="transfer_pin_intl">Transfer PIN</Label>
                   <Input
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter description"
+                    id="transfer_pin_intl"
+                    type="password"
+                    maxLength={4}
+                    value={transferPin}
+                    onChange={(e) => setTransferPin(e.target.value)}
+                    placeholder="Enter your 4-digit PIN"
+                    required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="category">Category (Optional)</Label>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
                 <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? "Withdrawing..." : "Withdraw"}
+                  {isLoading ? "Initiating Transfer..." : "Transfer"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
-
-      <Dialog open={otpDialogOpen} onOpenChange={setOtpDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Verify OTP - Stage {otpStage}</DialogTitle>
-            <DialogDescription>
-              Please enter the OTP sent to your email for stage {otpStage} of your withdrawal.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleOtpSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="otp_code">OTP Code</Label>
-              <Input
-                id="otp_code"
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                placeholder="Enter 6-digit OTP"
-                required
-              />
-            </div>
-            {error && (
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md">
-                {error}
-              </div>
-            )}
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Verifying..." : "Verify OTP"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
         <DialogContent>

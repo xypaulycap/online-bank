@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'transfer', 'payment')),
+  transaction_type VARCHAR(25) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'transfer', 'payment', 'local_transfer', 'wire_transfer', 'international_transfer')),
   amount DECIMAL(15, 2) NOT NULL,
   description TEXT,
   category_id INTEGER REFERENCES transaction_categories(id) ON DELETE SET NULL,
