@@ -475,7 +475,7 @@ export function LandingPage() {
                 { icon: "fa-clock", title: "Banking Hours", content: ["Mon-Fri: 9AM-5PM", "Sat: 9AM-1PM", "Sun: Closed"] },
                 { icon: "fa-phone", title: "Phone Banking", content: ["Available 24/7", "Call: 1-800-BANKING", "International: +1-555-0123"] },
                 { icon: "fa-envelope", title: "Email Support", content: ["Response within 24hrs", "support@real12.com"] },
-                { icon: "fa-map-marker-alt", title: "Visit Us", content: ["123 Banking Street", "Financial District", "New York, NY 10001"] },
+                { icon: "fa-map-marker-alt", title: "Visit Us", content: ["Via Camischolas sura 132", "Diezikon", "Switzerland, 8637"] },
               ].map((contact, idx) => (
                 <div key={idx} className="text-center lg:text-left">
                   <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mx-auto lg:mx-0 mb-3">

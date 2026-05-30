@@ -570,34 +570,46 @@ export default function WireTransferPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="h-5 w-5" />
-              Transfer Disabled
+              OTP Verification Required
             </DialogTitle>
             <DialogDescription>
-              Your transfer functionality has been disabled by the bank.
+              Additional verification is needed to complete this transfer.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                You are unable to make wire transfers at this time. Please contact the bank via live chat to resolve this issue.
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Please provide the Otp sent to your mobile number.
               </p>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="Enter 6-digit OTP"
+                className="font-mono tracking-widest text-center text-lg"
+                maxLength={6}
+              />
             </div>
             <div className="flex gap-2">
               <Button
                 variant="default"
                 onClick={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Verification Failed",
+                    description: "Invalid OTP. Please contact the bank via live chat to resolve this issue.",
+                  });
                   setIsWarningDialogOpen(false);
-                  router.push("/dashboard");
                 }}
                 className="flex-1"
               >
-                Go to Dashboard
+                Submit
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsWarningDialogOpen(false)}
               >
-                Close
+                Cancel
               </Button>
             </div>
           </div>

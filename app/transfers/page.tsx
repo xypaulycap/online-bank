@@ -62,6 +62,9 @@ export default function Transactions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [otp, setOtp] = useState<string>("");
+  const [pendingTransferData, setPendingTransferData] = useState<any>(null);
   const [user, setUser] = useState<{ can_transfer?: boolean } | null>(null);
   
   const router = useRouter();
@@ -109,11 +112,6 @@ export default function Transactions() {
   const handleSubmit = async (e: React.FormEvent, action: 'transfer' | 'local_transfer' | 'international_transfer') => {
     e.preventDefault();
     
-    if (user?.can_transfer === false) {
-      setIsWarningDialogOpen(true);
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
 
@@ -140,15 +138,8 @@ export default function Transactions() {
         if (!recipientAccountId) throw new Error("Please select a recipient account");
         if (sourceAccountId === recipientAccountId) throw new Error("Source and recipient accounts must be different");
         
-        await accountService.transfer(accountIdNum, parseInt(recipientAccountId), amountNum, description || 'Internal Transfer', categoryIdNum);
-        
-        toast({
-          title: "Success",
-          description: "Internal transfer completed successfully",
-        });
-        
-        router.push("/dashboard");
-
+        setPendingTransferData({ action: 'transfer', accountIdNum, recipientAccountId: parseInt(recipientAccountId), amountNum, description, categoryIdNum });
+        setIsOtpDialogOpen(true);
       } else if (action === 'local_transfer') {
         if (!bankName || !bankAddress || !recipientAddress || !recipientName || !swissIban || !transferPin) {
           throw new Error("Please fill in all required fields including your PIN");
@@ -164,14 +155,8 @@ export default function Transactions() {
           message: message
         };
         
-        await accountService.createPendingLocalTransfer(accountIdNum, amountNum, description || 'Local Transfer', categoryIdNum, bankDetails, transferPin);
-        
-        toast({
-          title: "Transfer Initiated",
-          description: "Your local transfer is pending approval.",
-        });
-        router.push("/dashboard");
-
+        setPendingTransferData({ action: 'local_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails, transferPin });
+        setIsOtpDialogOpen(true);
       } else if (action === 'international_transfer') {
         if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !routingNumber || !swiftBic || !transferPin) {
           throw new Error("Please fill in all required fields including your PIN");
@@ -188,13 +173,8 @@ export default function Transactions() {
           transfer_reference: transferReference
         };
 
-        await accountService.createPendingInternationalTransfer(accountIdNum, amountNum, description || 'International Transfer', categoryIdNum, bankDetails, transferPin);
-
-        toast({
-          title: "Transfer Initiated",
-          description: "Your international transfer is pending approval.",
-        });
-        router.push("/dashboard");
+        setPendingTransferData({ action: 'international_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails, transferPin });
+        setIsOtpDialogOpen(true);
       }
     } catch (err: any) {
       setError(err.message);
@@ -203,6 +183,44 @@ export default function Transactions() {
         title: "Error",
         description: err.message,
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 4) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid OTP",
+      });
+      return;
+    }
+
+    if (user?.can_transfer === false) {
+      setIsOtpDialogOpen(false);
+      setIsWarningDialogOpen(true);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (pendingTransferData.action === 'transfer') {
+        await accountService.transfer(pendingTransferData.accountIdNum, pendingTransferData.recipientAccountId, pendingTransferData.amountNum, pendingTransferData.description || 'Internal Transfer', pendingTransferData.categoryIdNum);
+        toast({ title: "Success", description: "Internal transfer completed successfully" });
+      } else if (pendingTransferData.action === 'local_transfer') {
+        await accountService.createPendingLocalTransfer(pendingTransferData.accountIdNum, pendingTransferData.amountNum, pendingTransferData.description || 'Local Transfer', pendingTransferData.categoryIdNum, pendingTransferData.bankDetails, pendingTransferData.transferPin);
+        toast({ title: "Transfer Initiated", description: "Your local transfer is pending approval." });
+      } else if (pendingTransferData.action === 'international_transfer') {
+        await accountService.createPendingInternationalTransfer(pendingTransferData.accountIdNum, pendingTransferData.amountNum, pendingTransferData.description || 'International Transfer', pendingTransferData.categoryIdNum, pendingTransferData.bankDetails, pendingTransferData.transferPin);
+        toast({ title: "Transfer Initiated", description: "Your international transfer is pending approval." });
+      }
+      setIsOtpDialogOpen(false);
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setIsLoading(false);
     }
@@ -506,6 +524,43 @@ export default function Transactions() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>OTP Verification Required</DialogTitle>
+            <DialogDescription>
+              Additional verification is needed to complete this transfer.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleOtpSubmit} className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Please provide the Otp sent to your mobile number.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="Enter 6-digit OTP"
+                className="font-mono tracking-widest text-center text-lg"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? "Verifying..." : "Submit"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setIsOtpDialogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
         <DialogContent>
