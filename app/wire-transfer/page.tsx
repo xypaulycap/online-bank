@@ -185,7 +185,7 @@ export default function WireTransferPage() {
           setPin(""); // Clear PIN 1
           toast({
             title: "Stage 1 Verified",
-            description: "Please enter your second PIN to complete the transfer.",
+            description: "Please enter the PIN sent to you to complete the transfer.",
           });
           setIsLoading(false);
           return;
@@ -472,12 +472,12 @@ export default function WireTransferPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pinStep === 1 ? "Enter PIN to Complete Transfer" : "Enter Second PIN"}
+              {pinStep === 1 ? "Enter PIN to Complete Transfer" : "Enter Sent PIN"}
             </DialogTitle>
             <DialogDescription>
               {pinStep === 1 
                 ? "Enter your 4-digit PIN to approve and complete the wire transfer." 
-                : "Please enter your second security PIN to finalize the transfer."}
+                : "Please enter the PIN sent to you to finalize the transfer."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePinSubmit} className="space-y-4">
@@ -504,7 +504,7 @@ export default function WireTransferPage() {
               </div>
             ) : (
               <div>
-                <Label htmlFor="pin2">Second 4-Digit PIN</Label>
+                <Label htmlFor="pin2">PIN Sent to You</Label>
                 <Input
                   id="pin2"
                   type="password"
@@ -520,7 +520,7 @@ export default function WireTransferPage() {
                   autoFocus
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Enter your second security PIN
+                  Enter the PIN sent to you
                 </p>
               </div>
             )}
