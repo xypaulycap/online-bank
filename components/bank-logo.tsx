@@ -16,7 +16,7 @@ export function BankLogo({
     <div className={cn("flex items-center", className)}>
       <div className={cn("relative flex shrink-0 items-center", compact ? "h-10" : "h-16")}>
         <Image 
-          src="/sig-logo.jpeg" 
+          src="/logo.png" 
           alt="Valtier Financial Group" 
           width={compact ? 150 : 240}
           height={compact ? 40 : 64}

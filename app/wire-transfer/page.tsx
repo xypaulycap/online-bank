@@ -282,7 +282,7 @@ export default function WireTransferPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 max-w-2xl">
+    <div className="container mx-auto py-6 px-4 md:py-8 md:px-6 max-w-2xl">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -531,7 +531,7 @@ export default function WireTransferPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -547,14 +547,14 @@ export default function WireTransferPage() {
                     });
                   }
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Complete Later
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || (pinStep === 1 ? pin.length !== 4 : pin2.length !== 4)}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 {isLoading 
                   ? "Processing..." 
@@ -590,7 +590,7 @@ export default function WireTransferPage() {
                 maxLength={6}
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="default"
                 onClick={() => {
@@ -601,13 +601,14 @@ export default function WireTransferPage() {
                   });
                   setIsWarningDialogOpen(false);
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Submit
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsWarningDialogOpen(false)}
+                className="w-full sm:flex-1"
               >
                 Cancel
               </Button>

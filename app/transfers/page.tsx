@@ -57,7 +57,11 @@ export default function Transactions() {
   const [referenceNumber, setReferenceNumber] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   
-  const [transferPin, setTransferPin] = useState<string>("");
+  const [pin, setPin] = useState<string>("");
+  const [pin2, setPin2] = useState<string>("");
+  const [pinStep, setPinStep] = useState<1 | 2>(1);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
+  const [pendingTransactionId, setPendingTransactionId] = useState<number | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +69,7 @@ export default function Transactions() {
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
   const [otp, setOtp] = useState<string>("");
   const [pendingTransferData, setPendingTransferData] = useState<any>(null);
-  const [user, setUser] = useState<{ can_transfer?: boolean } | null>(null);
+  const [user, setUser] = useState<{ can_transfer?: boolean; has_pin_2?: boolean } | null>(null);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -141,8 +145,8 @@ export default function Transactions() {
         setPendingTransferData({ action: 'transfer', accountIdNum, recipientAccountId: parseInt(recipientAccountId), amountNum, description, categoryIdNum });
         setIsOtpDialogOpen(true);
       } else if (action === 'local_transfer') {
-        if (!bankName || !bankAddress || !recipientAddress || !recipientName || !swissIban || !transferPin) {
-          throw new Error("Please fill in all required fields including your PIN");
+        if (!bankName || !bankAddress || !recipientAddress || !recipientName || !swissIban) {
+          throw new Error("Please fill in all required fields");
         }
         
         const bankDetails = {
@@ -155,11 +159,11 @@ export default function Transactions() {
           message: message
         };
         
-        setPendingTransferData({ action: 'local_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails, transferPin });
-        setIsOtpDialogOpen(true);
+        setPendingTransferData({ action: 'local_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails });
+        setIsPinDialogOpen(true);
       } else if (action === 'international_transfer') {
-        if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !routingNumber || !swiftBic || !transferPin) {
-          throw new Error("Please fill in all required fields including your PIN");
+        if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !routingNumber || !swiftBic) {
+          throw new Error("Please fill in all required fields");
         }
 
         const bankDetails = {
@@ -173,8 +177,8 @@ export default function Transactions() {
           transfer_reference: transferReference
         };
 
-        setPendingTransferData({ action: 'international_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails, transferPin });
-        setIsOtpDialogOpen(true);
+        setPendingTransferData({ action: 'international_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails });
+        setIsPinDialogOpen(true);
       }
     } catch (err: any) {
       setError(err.message);
@@ -210,12 +214,6 @@ export default function Transactions() {
       if (pendingTransferData.action === 'transfer') {
         await accountService.transfer(pendingTransferData.accountIdNum, pendingTransferData.recipientAccountId, pendingTransferData.amountNum, pendingTransferData.description || 'Internal Transfer', pendingTransferData.categoryIdNum);
         toast({ title: "Success", description: "Internal transfer completed successfully" });
-      } else if (pendingTransferData.action === 'local_transfer') {
-        await accountService.createPendingLocalTransfer(pendingTransferData.accountIdNum, pendingTransferData.amountNum, pendingTransferData.description || 'Local Transfer', pendingTransferData.categoryIdNum, pendingTransferData.bankDetails, pendingTransferData.transferPin);
-        toast({ title: "Transfer Initiated", description: "Your local transfer is pending approval." });
-      } else if (pendingTransferData.action === 'international_transfer') {
-        await accountService.createPendingInternationalTransfer(pendingTransferData.accountIdNum, pendingTransferData.amountNum, pendingTransferData.description || 'International Transfer', pendingTransferData.categoryIdNum, pendingTransferData.bankDetails, pendingTransferData.transferPin);
-        toast({ title: "Transfer Initiated", description: "Your international transfer is pending approval." });
       }
       setIsOtpDialogOpen(false);
       router.push("/dashboard");
@@ -223,6 +221,125 @@ export default function Transactions() {
       toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (pinStep === 1) {
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "PIN must be exactly 4 digits",
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        let transactionId;
+        if (pendingTransferData.action === 'local_transfer') {
+          transactionId = await accountService.createPendingLocalTransfer(
+            pendingTransferData.accountIdNum,
+            pendingTransferData.amountNum,
+            pendingTransferData.description || 'Local Transfer',
+            pendingTransferData.categoryIdNum,
+            pendingTransferData.bankDetails,
+            pin
+          );
+        } else if (pendingTransferData.action === 'international_transfer') {
+          transactionId = await accountService.createPendingInternationalTransfer(
+            pendingTransferData.accountIdNum,
+            pendingTransferData.amountNum,
+            pendingTransferData.description || 'International Transfer',
+            pendingTransferData.categoryIdNum,
+            pendingTransferData.bankDetails,
+            pin
+          );
+        } else {
+          throw new Error("Invalid transfer type for PIN verification");
+        }
+
+        setPendingTransactionId(transactionId);
+
+        if (user?.has_pin_2) {
+          setPinStep(2);
+          setPin("");
+          toast({
+            title: "Stage 1 Verified",
+            description: "Please enter your second PIN to complete the transfer.",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        await accountService.completePendingWireTransfer(transactionId, "SKIP");
+
+        toast({
+          title: "Success",
+          description: "Transfer completed successfully",
+        });
+
+        setPin("");
+        setPin2("");
+        setPinStep(1);
+        setPendingTransactionId(null);
+        setIsPinDialogOpen(false);
+        router.push("/dashboard");
+      } catch (err: any) {
+        setError(err.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+        setIsLoading(false);
+      }
+    } else {
+      if (pin2.length !== 4 || !/^\d{4}$/.test(pin2)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Second PIN must be exactly 4 digits",
+        });
+        return;
+      }
+
+      if (!pendingTransactionId) {
+        setError("Transaction ID missing");
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        await accountService.completePendingWireTransfer(pendingTransactionId, pin2);
+
+        toast({
+          title: "Success",
+          description: "Transfer completed successfully",
+        });
+
+        setPin("");
+        setPin2("");
+        setPinStep(1);
+        setPendingTransactionId(null);
+        setIsPinDialogOpen(false);
+        router.push("/dashboard");
+      } catch (err: any) {
+        setError(err.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+        setIsLoading(false);
+      }
     }
   };
 
@@ -239,7 +356,7 @@ export default function Transactions() {
             </div>
           )}
           <Tabs defaultValue="transfer">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto gap-2 sm:gap-0">
               <TabsTrigger value="transfer">Internal</TabsTrigger>
               <TabsTrigger value="local_transfer">Local</TabsTrigger>
               <TabsTrigger value="international_transfer">International</TabsTrigger>
@@ -398,23 +515,6 @@ export default function Transactions() {
                   </div>
                 </div>
 
-                <div className="pt-4 pb-2 border-b border-border">
-                  <h3 className="font-medium text-sm text-muted-foreground">Authorization</h3>
-                </div>
-
-                <div>
-                  <Label htmlFor="transfer_pin_local">Transfer PIN</Label>
-                  <Input
-                    id="transfer_pin_local"
-                    type="password"
-                    maxLength={4}
-                    value={transferPin}
-                    onChange={(e) => setTransferPin(e.target.value)}
-                    placeholder="Enter your 4-digit PIN"
-                    required
-                  />
-                </div>
-
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? "Initiating Transfer..." : "Transfer"}
                 </Button>
@@ -499,23 +599,6 @@ export default function Transactions() {
                   </div>
                 </div>
 
-                <div className="pt-4 pb-2 border-b border-border">
-                  <h3 className="font-medium text-sm text-muted-foreground">Authorization</h3>
-                </div>
-
-                <div>
-                  <Label htmlFor="transfer_pin_intl">Transfer PIN</Label>
-                  <Input
-                    id="transfer_pin_intl"
-                    type="password"
-                    maxLength={4}
-                    value={transferPin}
-                    onChange={(e) => setTransferPin(e.target.value)}
-                    placeholder="Enter your 4-digit PIN"
-                    required
-                  />
-                </div>
-
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? "Initiating Transfer..." : "Transfer"}
                 </Button>
@@ -524,6 +607,115 @@ export default function Transactions() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={isPinDialogOpen} onOpenChange={(open) => {
+        setIsPinDialogOpen(open);
+        if (!open) {
+          setPin("");
+          setPin2("");
+          setPinStep(1);
+          if (pendingTransactionId) {
+             toast({
+                title: "Transaction Pending",
+                description: "Transaction was created but not finalized.",
+             });
+          }
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pinStep === 1 ? "Enter PIN to Complete Transfer" : "Enter Second PIN"}
+            </DialogTitle>
+            <DialogDescription>
+              {pinStep === 1 
+                ? "Enter your 4-digit PIN to approve and complete the transfer." 
+                : "Please enter your second security PIN to finalize the transfer."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePinSubmit} className="space-y-4">
+            {pinStep === 1 ? (
+              <div>
+                <Label htmlFor="pin">4-Digit PIN</Label>
+                <Input
+                  id="pin"
+                  type="password"
+                  maxLength={4}
+                  value={pin}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setPin(value);
+                  }}
+                  placeholder="0000"
+                  required
+                  className="font-mono text-center text-2xl tracking-widest"
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your 4-digit transfer PIN
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="pin2">Second 4-Digit PIN</Label>
+                <Input
+                  id="pin2"
+                  type="password"
+                  maxLength={4}
+                  value={pin2}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setPin2(value);
+                  }}
+                  placeholder="0000"
+                  required
+                  className="font-mono text-center text-2xl tracking-widest"
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your second security PIN
+                </p>
+              </div>
+            )}
+            
+            {error && (
+              <div className="text-sm font-medium text-destructive">
+                {error}
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsPinDialogOpen(false);
+                  setPin("");
+                  setPin2("");
+                  setPinStep(1);
+                  if (pendingTransactionId) {
+                    toast({
+                        title: "Transaction Pending",
+                        description: "Transaction was created but not finalized.",
+                    });
+                  }
+                }}
+                className="w-full sm:flex-1"
+              >
+                Complete Later
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || (pinStep === 1 ? pin.length !== 4 : pin2.length !== 4)}
+                className="w-full sm:flex-1"
+              >
+                {isLoading 
+                  ? "Processing..." 
+                  : (pinStep === 1 && user?.has_pin_2 ? "Next" : "Complete Transfer")}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
         <DialogContent>
@@ -550,11 +742,11 @@ export default function Transactions() {
                 required
               />
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button type="submit" disabled={isLoading} className="w-full sm:flex-1">
                 {isLoading ? "Verifying..." : "Submit"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setIsOtpDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsOtpDialogOpen(false)} className="w-full sm:flex-1">
                 Cancel
               </Button>
             </div>
@@ -579,20 +771,21 @@ export default function Transactions() {
                 You are unable to make transfers at this time. Please contact the bank via live chat to resolve this issue.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="default"
                 onClick={() => {
                   setIsWarningDialogOpen(false);
                   router.push("/dashboard");
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Go to Dashboard
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsWarningDialogOpen(false)}
+                className="w-full sm:flex-1"
               >
                 Close
               </Button>
