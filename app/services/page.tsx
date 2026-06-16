@@ -131,31 +131,28 @@ export default function ServicesPage() {
                 key={idx}
                 className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 border border-gray-200/50 dark:border-gray-700/50 hover:border-primary-300/50 dark:hover:border-primary-600/50 overflow-hidden"
               >
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
-                  service.color === 'primary' ? 'bg-gradient-to-br from-primary-500/10 via-transparent to-primary-500/10' :
-                  service.color === 'blue' ? 'bg-gradient-to-br from-blue-500/10 via-transparent to-blue-500/10' :
-                  service.color === 'green' ? 'bg-gradient-to-br from-green-500/10 via-transparent to-green-500/10' :
-                  service.color === 'purple' ? 'bg-gradient-to-br from-purple-500/10 via-transparent to-purple-500/10' :
-                  service.color === 'orange' ? 'bg-gradient-to-br from-orange-500/10 via-transparent to-orange-500/10' :
-                  'bg-gradient-to-br from-teal-500/10 via-transparent to-teal-500/10'
-                }`}></div>
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${service.color === 'primary' ? 'bg-gradient-to-br from-primary-500/10 via-transparent to-primary-500/10' :
+                    service.color === 'blue' ? 'bg-gradient-to-br from-blue-500/10 via-transparent to-blue-500/10' :
+                      service.color === 'green' ? 'bg-gradient-to-br from-green-500/10 via-transparent to-green-500/10' :
+                        service.color === 'purple' ? 'bg-gradient-to-br from-purple-500/10 via-transparent to-purple-500/10' :
+                          service.color === 'orange' ? 'bg-gradient-to-br from-orange-500/10 via-transparent to-orange-500/10' :
+                            'bg-gradient-to-br from-teal-500/10 via-transparent to-teal-500/10'
+                  }`}></div>
                 <div className="relative z-10">
-                  <div className={`flex items-center justify-center w-20 h-20 rounded-2xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg ${
-                    service.color === 'primary' ? 'bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50' :
-                    service.color === 'blue' ? 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50' :
-                    service.color === 'green' ? 'bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50' :
-                    service.color === 'purple' ? 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/50 dark:to-purple-800/50' :
-                    service.color === 'orange' ? 'bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/50 dark:to-orange-800/50' :
-                    'bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/50 dark:to-teal-800/50'
-                  }`}>
-                    <i className={`fa-solid ${service.icon} text-2xl ${
-                      service.color === 'primary' ? 'text-primary-600 dark:text-primary-400' :
-                      service.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-                      service.color === 'green' ? 'text-green-600 dark:text-green-400' :
-                      service.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
-                      service.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
-                      'text-teal-600 dark:text-teal-400'
-                    }`}></i>
+                  <div className={`flex items-center justify-center w-20 h-20 rounded-2xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg ${service.color === 'primary' ? 'bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50' :
+                      service.color === 'blue' ? 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50' :
+                        service.color === 'green' ? 'bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50' :
+                          service.color === 'purple' ? 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/50 dark:to-purple-800/50' :
+                            service.color === 'orange' ? 'bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/50 dark:to-orange-800/50' :
+                              'bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/50 dark:to-teal-800/50'
+                    }`}>
+                    <i className={`fa-solid ${service.icon} text-2xl ${service.color === 'primary' ? 'text-primary-600 dark:text-primary-400' :
+                        service.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                          service.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                            service.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
+                              service.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
+                                'text-teal-600 dark:text-teal-400'
+                      }`}></i>
                   </div>
                   <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {service.title}
@@ -168,14 +165,13 @@ export default function ServicesPage() {
                     <ul className="space-y-2">
                       {service.features.slice(0, 4).map((feature, fIdx) => (
                         <li key={fIdx} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                          <i className={`fa-solid fa-check mr-2 ${
-                            service.color === 'primary' ? 'text-primary-500' :
-                            service.color === 'blue' ? 'text-blue-500' :
-                            service.color === 'green' ? 'text-green-500' :
-                            service.color === 'purple' ? 'text-purple-500' :
-                            service.color === 'orange' ? 'text-orange-500' :
-                            'text-teal-500'
-                          }`}></i>
+                          <i className={`fa-solid fa-check mr-2 ${service.color === 'primary' ? 'text-primary-500' :
+                              service.color === 'blue' ? 'text-blue-500' :
+                                service.color === 'green' ? 'text-green-500' :
+                                  service.color === 'purple' ? 'text-purple-500' :
+                                    service.color === 'orange' ? 'text-orange-500' :
+                                      'text-teal-500'
+                            }`}></i>
                           {feature}
                         </li>
                       ))}
@@ -183,14 +179,13 @@ export default function ServicesPage() {
                   </div>
                   <Link
                     href={service.href}
-                    className={`inline-flex items-center px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group ${
-                      service.color === 'primary' ? 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800' :
-                      service.color === 'blue' ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' :
-                      service.color === 'green' ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' :
-                      service.color === 'purple' ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800' :
-                      service.color === 'orange' ? 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800' :
-                      'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800'
-                    }`}
+                    className={`inline-flex items-center px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group ${service.color === 'primary' ? 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800' :
+                        service.color === 'blue' ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' :
+                          service.color === 'green' ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' :
+                            service.color === 'purple' ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800' :
+                              service.color === 'orange' ? 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800' :
+                                'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800'
+                      }`}
                   >
                     Learn More
                     <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
@@ -208,7 +203,7 @@ export default function ServicesPage() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-100 to-teal-100 dark:from-primary-900/50 dark:to-teal-900/50 text-primary-700 dark:text-primary-300 rounded-full text-sm font-semibold mb-4">
               <i className="fa-solid fa-star mr-2"></i>
-              Why Choose Valtier Finacial Group
+              Why Choose Valtier Financial Group
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
               Banking Made Simple, Secure, and Personal
@@ -257,7 +252,7 @@ export default function ServicesPage() {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied members who trust Valtier Finacial Group for their banking needs. Open an account today and experience the difference.
+            Join thousands of satisfied members who trust Valtier Financial Group for their banking needs. Open an account today and experience the difference.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

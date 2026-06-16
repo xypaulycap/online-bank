@@ -104,7 +104,7 @@ export async function sendNotificationEmail(
           <div style="color: #4b5563; white-space: pre-wrap;">${message}</div>
         </div>
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px; text-align: center;">
-          <p>This is an automated notification from Valtier Finacial Group.</p>
+          <p>This is an automated notification from Valtier Financial Group.</p>
           <p>Please do not reply to this email.</p>
         </div>
       </body>
@@ -247,7 +247,7 @@ export async function sendTransactionReceiptEmail(
           </div>
         </div>
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px; text-align: center;">
-          <p>This is an automated receipt from Valtier Finacial Group.</p>
+          <p>This is an automated receipt from Valtier Financial Group.</p>
           <p>Please keep this receipt for your records.</p>
           <p>If you did not authorize this transaction, please contact support immediately.</p>
         </div>

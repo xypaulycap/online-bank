@@ -65,7 +65,7 @@ export function LandingFooter() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
-          <p>© {new Date().getFullYear()} Valtier Finacial Group. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Valtier Financial Group. All rights reserved.</p>
         </div>
       </div>
     </footer>

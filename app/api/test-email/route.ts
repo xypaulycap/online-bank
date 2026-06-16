@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // First verify email configuration
     console.log('Verifying email configuration...');
     const isVerified = await verifyEmailConfig();
-    
+
     if (!isVerified) {
       return NextResponse.json(
         { error: 'Email configuration verification failed. Check your SMTP settings.' },
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     console.log('Sending test email to:', to);
     await sendEmail({
       to,
-      subject: 'Test Email from Valtier Finacial Group',
+      subject: 'Test Email from Valtier Financial Group',
       html: `
         <!DOCTYPE html>
         <html>
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         message: 'Test email sent successfully',
         details: 'Check your inbox and spam folder'
       },

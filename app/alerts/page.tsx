@@ -50,7 +50,7 @@ export default function BusinessBankingPage() {
                 Built for Business Success
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                Whether you're a startup, small business, or established company, Valtier Finacial Group offers business banking solutions tailored to your needs. We provide the tools and support to help your business thrive.
+                Whether you're a startup, small business, or established company, Valtier Financial Group offers business banking solutions tailored to your needs. We provide the tools and support to help your business thrive.
               </p>
               <div className="space-y-4">
                 {[
@@ -119,7 +119,7 @@ export default function BusinessBankingPage() {
       <section className="py-16 lg:py-20 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Grow Your Business with Valtier Finacial Group
+            Grow Your Business with Valtier Financial Group
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Get started with business banking services designed to help your business succeed.

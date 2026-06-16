@@ -126,7 +126,7 @@ export default function LoansCreditPage() {
                 },
               };
               const classes = colorClasses[loan.color as keyof typeof colorClasses] || colorClasses.green;
-              
+
               return (
                 <div key={idx} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-200/50 dark:border-gray-700/50">
                   <div className={`flex items-center justify-center w-16 h-16 bg-gradient-to-br ${classes.bg} rounded-2xl mb-4`}>
@@ -161,7 +161,7 @@ export default function LoansCreditPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900 dark:text-white">
-                Why Choose Valtier Finacial Group for Loans?
+                Why Choose Valtier Financial Group for Loans?
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                 We're committed to providing you with the best loan options and terms. Our team of lending specialists works with you to find the right solution for your needs.

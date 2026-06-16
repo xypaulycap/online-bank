@@ -55,7 +55,7 @@ export default function Login() {
       </div>
       <h2 className="text-2xl font-bold mb-2 text-center">Login to Your Account</h2>
       <p className="mb-6 text-center text-sm text-muted-foreground">
-        Access your Valtier Finacial Group banking dashboard securely.
+        Access your Valtier Financial Group banking dashboard securely.
       </p>
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md text-sm">

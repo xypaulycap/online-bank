@@ -18,13 +18,13 @@ export default function AboutPage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm text-white/90 rounded-full text-sm font-semibold mb-6 border border-white/20">
             <i className="fa-solid fa-info-circle mr-2"></i>
-            About Valtier Finacial Group
+            About Valtier Financial Group
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
             Building Financial Strength Together
           </h1>
           <p className="text-xl text-primary-100 max-w-3xl mx-auto leading-relaxed">
-            Valtier Finacial Group is a full-service credit union built on the foundation of providing our members with exceptional service at every step of their financial journey.
+            Valtier Financial Group is a full-service credit union built on the foundation of providing our members with exceptional service at every step of their financial journey.
           </p>
         </div>
       </section>
@@ -42,7 +42,7 @@ export default function AboutPage() {
                 We Do Banking Differently
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                We believe that people come first, and that everyone deserves a great experience every step of the way. At Valtier Finacial Group, we're committed to helping our members achieve their financial goals through personalized service and competitive rates.
+                We believe that people come first, and that everyone deserves a great experience every step of the way. At Valtier Financial Group, we're committed to helping our members achieve their financial goals through personalized service and competitive rates.
               </p>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                 As a member-owned credit union, we're not driven by shareholder profits. Instead, we focus on providing the best possible value and service to our members, ensuring that your success is our priority.
@@ -155,7 +155,7 @@ export default function AboutPage() {
       <section className="py-16 lg:py-20 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-800 dark:to-primary-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Ready to Join the Valtier Finacial Group Family?
+            Ready to Join the Valtier Financial Group Family?
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Experience banking that puts you first. Open an account today and discover the difference of member-focused banking.
