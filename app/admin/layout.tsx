@@ -15,6 +15,7 @@ import {
   LogOut,
   Shield,
   Wallet,
+  Settings,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -126,6 +127,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Button variant="ghost" className="w-full justify-start">
               <Shield className="mr-2 h-4 w-4" />
               KYC Submissions
+            </Button>
+          </Link>
+          <Link href="/admin/settings">
+            <Button variant="ghost" className="w-full justify-start">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
             </Button>
           </Link>
         </nav>

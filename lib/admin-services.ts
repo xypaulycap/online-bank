@@ -1254,3 +1254,46 @@ export const adminCardRequestService = {
     return updatedRequest
   },
 }
+
+// Admin Settings Services
+export const adminSettingsService = {
+  getAdminSettings: async (settingKey: string) => {
+    await requireAdmin()
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('setting_value')
+      .eq('setting_key', settingKey)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No row found, return null
+        return null
+      }
+      throw error
+    }
+    
+    return data.setting_value
+  },
+
+  updateAdminSettings: async (settingKey: string, settingValue: any) => {
+    await requireAdmin()
+    
+    // Upsert the setting
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .upsert(
+        { 
+          setting_key: settingKey, 
+          setting_value: settingValue,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'setting_key' }
+      )
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+}

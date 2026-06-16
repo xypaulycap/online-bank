@@ -380,7 +380,7 @@ export default function Dashboard() {
                   </Button>
                   <Button 
                     className="flex-1 bg-white/20 text-white hover:bg-white/30 border border-white/30"
-                    onClick={() => router.push("/transfers")}
+                    onClick={() => router.push("/deposit")}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Money

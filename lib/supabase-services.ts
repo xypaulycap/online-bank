@@ -1425,4 +1425,23 @@ export const kycService = {
   },
 }
 
+// Public Settings Services
+export const publicSettingsService = {
+  getSetting: async (settingKey: string) => {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('setting_value')
+      .eq('setting_key', settingKey)
+      .single()
 
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null
+      }
+      console.error('Error fetching setting:', error)
+      return null
+    }
+    
+    return data.setting_value
+  }
+}

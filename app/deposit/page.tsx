@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { cryptoWalletService, accountService, depositRequestService } from "@/lib/supabase-services";
+import { cryptoWalletService, accountService, depositRequestService, publicSettingsService } from "@/lib/supabase-services";
 import { supabase } from "@/lib/supabase";
-import { Copy, Check, Wallet, AlertCircle, Send } from "lucide-react";
+import { Copy, Check, Wallet, AlertCircle, Send, User, Landmark, Hash, Share2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -49,6 +49,11 @@ interface Account {
 export default function DepositPage() {
   const [wallets, setWallets] = useState<CryptoWallet[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [adminBankDetails, setAdminBankDetails] = useState({
+    account_number: "Loading...",
+    bank_name: "Loading...",
+    account_name: "Loading...",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -91,6 +96,25 @@ export default function DepositPage() {
           title: "Error",
           description: `Failed to load crypto wallets: ${walletErr.message}`,
         });
+      }
+
+      try {
+        const details = await publicSettingsService.getSetting('bank_details');
+        if (details) {
+          setAdminBankDetails({
+            account_number: details.account_number || "N/A",
+            bank_name: details.bank_name || "N/A",
+            account_name: details.account_name || "N/A",
+          });
+        } else {
+          setAdminBankDetails({
+            account_number: "704 337 8748",
+            bank_name: "OPay Digital Service Limited (OPay)",
+            account_name: "EWEAN PATRICK AIYOHUYIN",
+          });
+        }
+      } catch (settingsErr) {
+        console.error("Error fetching admin bank details:", settingsErr);
       }
 
       try {
@@ -230,20 +254,96 @@ export default function DepositPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" />
-            <CardTitle>Deposit Funds</CardTitle>
+    <div className="container mx-auto py-8 max-w-2xl space-y-6">
+      {/* Admin Bank Details Card */}
+      <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white dark:bg-gray-800">
+        <CardContent className="p-6 sm:p-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-12 w-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-lg">
+              123
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Account Number</p>
+              <p className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">{adminBankDetails.account_number}</p>
+            </div>
           </div>
-          <CardDescription>
-            Copy the crypto wallet address below and send your funds. Your account will be credited once the transaction is confirmed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-12 w-12 bg-[#e6f7f2] dark:bg-[#00b47d]/20 rounded-2xl flex items-center justify-center text-[#00b47d]">
+              <Landmark className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Bank</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.bank_name}</p>
+            </div>
+          </div>
+          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-12 w-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-600 dark:text-gray-400">
+              <User className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Name</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.account_name}</p>
+            </div>
+          </div>
+          <div className="flex gap-3 sm:gap-4">
+            <Button 
+              variant="secondary" 
+              className="flex-1 bg-[#e6f7f2] text-[#00b47d] hover:bg-[#d1f0e6] dark:bg-[#00b47d]/10 dark:text-[#00b47d] dark:hover:bg-[#00b47d]/20 rounded-full h-12 sm:h-14 font-semibold text-sm sm:text-base border-0 shadow-none"
+              onClick={() => handleCopyAddress(adminBankDetails.account_number, -1)}
+            >
+              {copiedId === -1 ? "Copied!" : "Copy Number"}
+            </Button>
+            <Button 
+              className="flex-1 bg-[#00c288] hover:bg-[#00a876] text-white rounded-full h-12 sm:h-14 font-semibold text-sm sm:text-base border-0 shadow-none"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: 'Bank Details',
+                    text: `Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}`,
+                  });
+                } else {
+                  handleCopyAddress(`Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}`, -2);
+                }
+              }}
+            >
+              {copiedId === -2 ? "Details Copied!" : "Share Details"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Instructions Card */}
+      <Card className="border-0 shadow-md rounded-3xl bg-white dark:bg-gray-800">
+        <CardContent className="p-6 sm:p-8">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-6 text-base sm:text-lg">Add money via bank transfer in just 3 steps</h3>
+          <ol className="space-y-5 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+            <li className="flex gap-3">
+              <span className="font-bold text-[#00b47d]">1.</span>
+              <span className="leading-relaxed">Copy the account details above-{adminBankDetails.account_number} is your Account Number</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-[#00b47d]">2.</span>
+              <span className="leading-relaxed">Open the bank app you want to transfer money from</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="font-bold text-[#00b47d]">3.</span>
+              <span className="leading-relaxed">Transfer the details amount to this Account</span>
+            </li>
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* Crypto Wallets Section */}
+      <Card className="border-0 shadow-md rounded-3xl bg-white dark:bg-gray-800">
+        <CardContent className="p-6 sm:p-8">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-6 text-base sm:text-lg leading-relaxed">
+            Click on any of the crypto methods below to be taken directly to deposit.
+          </h3>
+
           {error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -252,102 +352,34 @@ export default function DepositPage() {
           {wallets.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No deposit options available at the moment.</p>
-              <p className="text-sm mt-2">Please check back later or contact support.</p>
+              <p>No crypto deposit options available at the moment.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {wallets.map((wallet) => (
-                <Card key={wallet.id} className="relative">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {wallet.logo_url ? (
-                          <img
-                            src={wallet.logo_url}
-                            alt={wallet.name}
-                            className="h-12 w-12 rounded-full object-cover"
-                            onError={(e) => {
-                              // Fallback if image fails to load
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                            {wallet.symbol.slice(0, 2)}
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="font-semibold text-lg">{wallet.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline">{wallet.symbol}</Badge>
-                            {wallet.network && (
-                              <Badge variant="secondary" className="text-xs">
-                                {wallet.network}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                          Wallet Address
-                        </label>
-                        <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                          <code className="flex-1 text-xs font-mono break-all">
-                            {wallet.wallet_address}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopyAddress(wallet.wallet_address, wallet.id)}
-                            className="shrink-0"
-                          >
-                            {copiedId === wallet.id ? (
-                              <Check className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          Make sure you're sending <strong>{wallet.symbol}</strong> to this address.
-                          {wallet.network && ` Network: ${wallet.network}`}
-                        </AlertDescription>
-                      </Alert>
-
-                      <Button
-                        variant="outline"
-                        className="w-full mt-3"
-                        onClick={() => handleOpenSubmitDialog(wallet.id)}
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        I've Sent the Funds
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={wallet.id} className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group" onClick={() => handleOpenSubmitDialog(wallet.id)}>
+                  <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform overflow-hidden">
+                    {wallet.logo_url ? (
+                      <img
+                        src={wallet.logo_url}
+                        alt={wallet.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="font-bold text-gray-600 dark:text-gray-300">
+                        {wallet.symbol.slice(0, 2)}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white text-center line-clamp-1">{wallet.name}</h4>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{wallet.symbol}</span>
+                </div>
               ))}
             </div>
           )}
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <h4 className="font-semibold mb-2">Important Instructions:</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Only send the exact cryptocurrency type shown (e.g., BTC to Bitcoin address)</li>
-              <li>Double-check the wallet address before sending</li>
-              <li>After sending, click "I've Sent the Funds" to submit your deposit request</li>
-              <li>Your deposit will be reviewed and approved by admin</li>
-              <li>Transactions may take a few minutes to confirm</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
 
@@ -359,8 +391,38 @@ export default function DepositPage() {
               Fill in the details of your crypto deposit. Admin will review and approve it.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitDeposit} className="space-y-4">
-            <div>
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+              <p className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Deposit Address ({wallets.find(w => w.id === selectedWalletId)?.symbol})
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs font-mono break-all bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+                  {wallets.find(w => w.id === selectedWalletId)?.wallet_address}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    const address = wallets.find(w => w.id === selectedWalletId)?.wallet_address;
+                    if (address) handleCopyAddress(address, -3);
+                  }}
+                  className="shrink-0"
+                >
+                  {copiedId === -3 ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-red-500 mt-2">
+                * Please send only {wallets.find(w => w.id === selectedWalletId)?.symbol} to this address on the {wallets.find(w => w.id === selectedWalletId)?.network || "correct"} network.
+              </p>
+            </div>
+            <form onSubmit={handleSubmitDeposit} className="space-y-4">
+              <div>
               <Label htmlFor="account">Select Account *</Label>
               <Select
                 value={submitForm.account_id}
@@ -459,6 +521,7 @@ export default function DepositPage() {
               </Button>
             </div>
           </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
