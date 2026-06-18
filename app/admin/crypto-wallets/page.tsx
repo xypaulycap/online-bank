@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Edit, Trash2, Copy, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { ImageUpload } from "@/components/image-upload";
 
 interface CryptoWallet {
   id: number;
@@ -244,7 +245,7 @@ export default function AdminCryptoWalletsPage() {
               Add Crypto Wallet
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>Create Crypto Wallet</DialogTitle>
               <DialogDescription>
@@ -287,17 +288,16 @@ export default function AdminCryptoWalletsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="logo_url">Logo URL</Label>
-                <Input
-                  id="logo_url"
+                <Label>Logo</Label>
+                <ImageUpload
                   value={formData.logo_url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, logo_url: e.target.value })
-                  }
-                  placeholder="https://example.com/logo.png"
+                  onChange={(url) => setFormData({ ...formData, logo_url: url })}
+                  onError={(err) => toast({ variant: "destructive", title: "Upload Error", description: err })}
+                  folder="crypto_logos"
+                  previewClassName="w-16 h-16 object-contain"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  URL to the crypto logo image
+                  Upload the crypto logo image
                 </p>
               </div>
               <div>
@@ -439,7 +439,7 @@ export default function AdminCryptoWalletsPage() {
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Edit Crypto Wallet</DialogTitle>
             <DialogDescription>
@@ -479,13 +479,13 @@ export default function AdminCryptoWalletsPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit_logo_url">Logo URL</Label>
-              <Input
-                id="edit_logo_url"
+              <Label>Logo</Label>
+              <ImageUpload
                 value={formData.logo_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, logo_url: e.target.value })
-                }
+                onChange={(url) => setFormData({ ...formData, logo_url: url })}
+                onError={(err) => toast({ variant: "destructive", title: "Upload Error", description: err })}
+                folder="crypto_logos"
+                previewClassName="w-16 h-16 object-contain"
               />
             </div>
             <div>
