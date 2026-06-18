@@ -115,6 +115,7 @@ export function LandingPage() {
                   <div>
                     <p className="text-purple-100 text-sm font-medium mb-1">24/7 SUPPORT</p>
                     <p className="text-lg font-bold">+1(437)374 6082</p>
+                    <p className="text-lg font-bold">+447882752978</p>
                     <p className="text-sm text-purple-100">Always here to help</p>
                   </div>
                   <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -474,7 +475,7 @@ export function LandingPage() {
           <div className="grid lg:grid-cols-4 gap-6">
             {[
               { icon: "fa-clock", title: "Banking Hours", content: ["Mon-Fri: 9AM-5PM", "Sat: 9AM-1PM", "Sun: Closed"] },
-              { icon: "fa-phone", title: "Phone Banking", content: ["Available 24/7", "Call: +1(437)374 6082"] },
+              { icon: "fa-phone", title: "Phone Banking", content: ["Available 24/7", "Call: +1(437)374 6082", "Call: +447882752978"] },
               { icon: "fa-envelope", title: "Email Support", content: ["Response within 24hrs", "info@valtierfingroup.com"] },
 
             ].map((contact, idx) => (

@@ -53,6 +53,7 @@ export default function DepositPage() {
     account_number: "Loading...",
     bank_name: "Loading...",
     account_name: "Loading...",
+    routing_number: "Loading...",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +106,14 @@ export default function DepositPage() {
             account_number: details.account_number || "N/A",
             bank_name: details.bank_name || "N/A",
             account_name: details.account_name || "N/A",
+            routing_number: details.routing_number || "N/A",
           });
         } else {
           setAdminBankDetails({
             account_number: "704 337 8748",
             bank_name: "OPay Digital Service Limited (OPay)",
             account_name: "EWEAN PATRICK AIYOHUYIN",
+            routing_number: "N/A",
           });
         }
       } catch (settingsErr) {
@@ -278,13 +281,23 @@ export default function DepositPage() {
             </div>
           </div>
           <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-4">
             <div className="h-12 w-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-600 dark:text-gray-400">
               <User className="h-6 w-6" />
             </div>
             <div>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Name</p>
               <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.account_name}</p>
+            </div>
+          </div>
+          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-12 w-12 bg-[#e6f7f2] dark:bg-[#00b47d]/20 rounded-2xl flex items-center justify-center text-[#00b47d]">
+              <Hash className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Routing Number</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.routing_number}</p>
             </div>
           </div>
           <div className="flex gap-3 sm:gap-4">
@@ -301,10 +314,10 @@ export default function DepositPage() {
                 if (navigator.share) {
                   navigator.share({
                     title: 'Bank Details',
-                    text: `Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}`,
+                    text: `Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}\nRouting Number: ${adminBankDetails.routing_number}`,
                   });
                 } else {
-                  handleCopyAddress(`Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}`, -2);
+                  handleCopyAddress(`Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}\nRouting Number: ${adminBankDetails.routing_number}`, -2);
                 }
               }}
             >

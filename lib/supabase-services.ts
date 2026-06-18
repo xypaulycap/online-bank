@@ -242,7 +242,7 @@ export const accountService = {
 
   deposit: async (accountId: number, amount: number, description: string, categoryId?: number) => {
     // Start transaction - update balance and create transaction record
-    const { data: account } = await accountService.getAccount(accountId)
+    const account = await accountService.getAccount(accountId)
     const newBalance = parseFloat(account.balance) + amount
 
     const { error: updateError } = await supabase
@@ -280,7 +280,7 @@ export const accountService = {
   },
 
   withdraw: async (accountId: number, amount: number, description: string, categoryId?: number, bankDetails?: any) => {
-    const { data: account } = await accountService.getAccount(accountId)
+    const account = await accountService.getAccount(accountId)
     const currentBalance = parseFloat(account.balance)
 
     if (currentBalance < amount) {
@@ -351,16 +351,7 @@ export const accountService = {
 
     if (sourceError) throw sourceError
 
-    // Update recipient account
-    const newRecipientBalance = parseFloat(recipientAccount.balance) + amount
-    const { error: recipientError } = await supabase
-      .from('accounts')
-      .update({ balance: newRecipientBalance })
-      .eq('id', recipientAccountId)
-
-    if (recipientError) throw recipientError
-
-    // Create transaction record
+    // Create transaction record (recipient will be credited on admin approval)
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
@@ -370,6 +361,7 @@ export const accountService = {
         description,
         category_id: categoryId || null,
         recipient_account_id: recipientAccountId,
+        status: 'pending',
       })
       .select()
       .single()
@@ -462,6 +454,7 @@ export const accountService = {
         description: fullDescription,
         category_id: categoryId || null,
         recipient_account_id: null, // External account, not in our database
+        status: 'pending',
       })
       .select()
       .single()
@@ -520,6 +513,15 @@ export const accountService = {
     if (parseFloat(sourceAccountData.balance.toString()) < amount) {
       throw new Error('Insufficient funds')
     }
+
+    // Debit source account IMMEDIATELY to reserve funds
+    const newSourceBalance = parseFloat(sourceAccountData.balance.toString()) - amount
+    const { error: sourceError } = await supabase
+      .from('accounts')
+      .update({ balance: newSourceBalance })
+      .eq('id', accountId)
+    
+    if (sourceError) throw sourceError
 
     // For wire transfers, recipient is external (not in our database)
     // Store recipient account number and bank details in description
@@ -589,6 +591,15 @@ export const accountService = {
     if (sourceAccountData.user_id !== user.id) throw new Error('Unauthorized: Account does not belong to you')
     if (parseFloat(sourceAccountData.balance.toString()) < amount) throw new Error('Insufficient funds')
 
+    // Debit source account IMMEDIATELY to reserve funds
+    const newSourceBalance = parseFloat(sourceAccountData.balance.toString()) - amount
+    const { error: sourceError } = await supabase
+      .from('accounts')
+      .update({ balance: newSourceBalance })
+      .eq('id', accountId)
+    
+    if (sourceError) throw sourceError
+
     const fullDescription = bankDetails 
       ? `${description}\n\nRecipient Name: ${bankDetails.recipient_name}\nRecipient Address: ${bankDetails.recipient_address}\nBank Name: ${bankDetails.bank_name}\nBank Address: ${bankDetails.bank_address}\nAccount Number: ${bankDetails.account_number}\nRouting Number: ${bankDetails.routing_number}\nSWIFT/BIC: ${bankDetails.swift_bic}\nTransfer Reference: ${bankDetails.transfer_reference || 'N/A'}`
       : description;
@@ -652,6 +663,15 @@ export const accountService = {
     if (sourceAccountError || !sourceAccountData) throw new Error('Source account not found')
     if (sourceAccountData.user_id !== user.id) throw new Error('Unauthorized: Account does not belong to you')
     if (parseFloat(sourceAccountData.balance.toString()) < amount) throw new Error('Insufficient funds')
+
+    // Debit source account IMMEDIATELY to reserve funds
+    const newSourceBalance = parseFloat(sourceAccountData.balance.toString()) - amount
+    const { error: sourceError } = await supabase
+      .from('accounts')
+      .update({ balance: newSourceBalance })
+      .eq('id', accountId)
+    
+    if (sourceError) throw sourceError
 
     const fullDescription = bankDetails 
       ? `${description}\n\nBank Name: ${bankDetails.bank_name}\nBank Address: ${bankDetails.bank_address}\nRecipient Address: ${bankDetails.recipient_address}\nRecipient Name: ${bankDetails.recipient_name}\nSwiss IBAN: ${bankDetails.swiss_iban}\nReference Number: ${bankDetails.reference_number || 'N/A'}\nMessage: ${bankDetails.message || 'N/A'}`
@@ -766,53 +786,11 @@ export const accountService = {
       throw new Error('Insufficient funds')
     }
 
-    // For wire transfers, recipient is external - only debit source account
-    // For local transfers, we would credit the recipient account, but wire transfers are external
-    if (['wire_transfer', 'international_transfer'].includes(transaction.transaction_type) || 
-        (transaction.transaction_type === 'local_transfer' && !transaction.recipient_account_id)) {
-      // Only debit source account (recipient is external)
-      const newSourceBalance = parseFloat(account.balance.toString()) - parseFloat(transaction.amount.toString())
-      const { error: sourceError } = await supabase
-        .from('accounts')
-        .update({ balance: newSourceBalance })
-        .eq('id', transaction.account_id)
-
-      if (sourceError) throw sourceError
-    } else if (transaction.transaction_type === 'local_transfer' && transaction.recipient_account_id) {
-      // For local transfers, both debit and credit
-      const newSourceBalance = parseFloat(account.balance.toString()) - parseFloat(transaction.amount.toString())
-      const { error: sourceError } = await supabase
-        .from('accounts')
-        .update({ balance: newSourceBalance })
-        .eq('id', transaction.account_id)
-
-      if (sourceError) throw sourceError
-
-      // Get recipient account
-      const { data: recipientAccount, error: recipientError } = await supabase
-        .from('accounts')
-        .select('id, balance')
-        .eq('id', transaction.recipient_account_id)
-        .single()
-
-      if (recipientError || !recipientAccount) {
-        throw new Error('Recipient account not found')
-      }
-
-      // Update recipient account (credit)
-      const newRecipientBalance = parseFloat(recipientAccount.balance.toString()) + parseFloat(transaction.amount.toString())
-      const { error: updateRecipientError } = await supabase
-        .from('accounts')
-        .update({ balance: newRecipientBalance })
-        .eq('id', transaction.recipient_account_id)
-
-      if (updateRecipientError) throw updateRecipientError
-    }
-
-    // Update transaction status to approved
+    // Funds are already debited when the pending transaction was created
+    // We only need to mark verification step as completed
     const { error: updateTxError } = await supabase
       .from('transactions')
-      .update({ status: 'approved' })
+      .update({ verification_step: 2 })
       .eq('id', transactionId)
 
     if (updateTxError) throw updateTxError
@@ -887,6 +865,7 @@ export const transactionService = {
       category: tx.category,
       recipient_account: tx.recipient_account_id,
       timestamp: tx.timestamp,
+      status: tx.status,
     }))
   },
 

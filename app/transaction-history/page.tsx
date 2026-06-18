@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { transactionService } from "@/lib/supabase-services";
 import { supabase } from "@/lib/supabase";
 
@@ -19,6 +20,7 @@ interface Transaction {
   category: { id: number; name: string; description: string } | null;
   recipient_account: number | null;
   timestamp: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
 }
 
 function extractDescriptionField(description: string | null | undefined, label: string): string | null {
@@ -161,6 +163,7 @@ export default function TransactionHistory() {
                   <TableHead className="text-green-800">ID</TableHead>
                   <TableHead className="text-green-800">Type</TableHead>
                   <TableHead className="text-green-800">Amount</TableHead>
+                  <TableHead className="text-green-800">Status</TableHead>
                   <TableHead className="text-green-800">Category</TableHead>
                   <TableHead className="text-green-800">Date</TableHead>
                   <TableHead className="text-green-800">Description</TableHead>
@@ -180,6 +183,11 @@ export default function TransactionHistory() {
                     <TableCell className="capitalize">{txn.transaction_type}</TableCell>
                     <TableCell className={txn.transaction_type === 'deposit' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
                       {txn.transaction_type === 'deposit' ? '+' : '-'}${parseFloat(txn.amount || '0').toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={txn.status === 'approved' ? 'default' : txn.status === 'pending' ? 'secondary' : 'destructive'} className="capitalize">
+                        {txn.status || 'approved'}
+                      </Badge>
                     </TableCell>
                     <TableCell>{txn.category?.name || "N/A"}</TableCell>
                     <TableCell>{new Date(txn.timestamp).toLocaleDateString()}</TableCell>

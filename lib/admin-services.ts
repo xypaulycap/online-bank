@@ -602,17 +602,7 @@ export const adminTransactionService = {
 
         if (balanceError) throw balanceError
       } else if (['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(txType)) {
-        // Debit the account
-        if (currentBalance < amount) {
-          throw new Error('Insufficient funds to approve this transaction')
-        }
-        const newBalance = currentBalance - amount
-        const { error: balanceError } = await supabase
-          .from('accounts')
-          .update({ balance: newBalance })
-          .eq('id', transaction.account_id)
-
-        if (balanceError) throw balanceError
+        // Sender was ALREADY DEBITED when the transaction was created, so we do NOT debit again
 
         // For transfers, also credit recipient account
         if (['transfer', 'local_transfer'].includes(txType) && transaction.recipient_account_id) {
@@ -638,7 +628,7 @@ export const adminTransactionService = {
 
     // If rejecting, we might need to reverse the transaction if it was already processed
     // For now, we'll just update the status
-    if (status === 'rejected' && currentStatus === 'approved') {
+    if (status === 'rejected' && (!currentStatus || currentStatus === 'pending' || currentStatus === 'approved')) {
       // Reverse the transaction
       const txType = transaction.transaction_type
       const amount = parseFloat(transaction.amount.toString())

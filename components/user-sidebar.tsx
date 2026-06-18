@@ -122,7 +122,7 @@ export function UserSidebar() {
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={cn("flex flex-col h-full", mobile ? "w-full" : "")}>
-      <div className="p-6">
+      <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-8">
           <BankLogo compact subtitle="Digital Banking" />
         </div>

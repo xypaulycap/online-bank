@@ -16,6 +16,7 @@ export default function AdminSettingsPage() {
     account_number: "",
     bank_name: "",
     account_name: "",
+    routing_number: "",
   });
   const { toast } = useToast();
 
@@ -32,6 +33,7 @@ export default function AdminSettingsPage() {
           account_number: details.account_number || "",
           bank_name: details.bank_name || "",
           account_name: details.account_name || "",
+          routing_number: details.routing_number || "",
         });
       }
     } catch (error: any) {
@@ -118,6 +120,16 @@ export default function AdminSettingsPage() {
               value={bankDetails.account_name}
               onChange={(e) => setBankDetails({ ...bankDetails, account_name: e.target.value })}
               placeholder="e.g. JOHN DOE"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="routing_number">Routing Number</Label>
+            <Input
+              id="routing_number"
+              value={bankDetails.routing_number}
+              onChange={(e) => setBankDetails({ ...bankDetails, routing_number: e.target.value })}
+              placeholder="e.g. 123456789"
             />
           </div>
 

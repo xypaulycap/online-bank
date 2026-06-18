@@ -69,6 +69,7 @@ interface Transaction {
   category: { id: number; name: string; description: string } | null;
   recipient_account: number | null;
   timestamp: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
 }
 
 interface Notification {
@@ -556,6 +557,9 @@ export default function Dashboard() {
                                 {transaction.category.name}
                               </p>
                             )}
+                            <Badge variant={transaction.status === 'approved' ? 'default' : transaction.status === 'pending' ? 'secondary' : 'destructive'} className="mt-2 text-[10px] h-4 py-0 px-2 capitalize inline-flex">
+                              {transaction.status || 'approved'}
+                            </Badge>
                           </div>
                         </div>
                         );

@@ -48,7 +48,7 @@ export default function ContactPage() {
                   {
                     icon: "fa-phone",
                     title: "Phone Banking",
-                    content: ["Available 24/7", "Call: +1(437)374 6082"],
+                    content: ["Available 24/7", "Call: +1(437)374 6082", "Call: +447882752978"],
                     color: "teal",
                   },
                   {

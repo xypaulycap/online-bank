@@ -92,15 +92,15 @@ export default function PendingTransactionsPage() {
     
     // Refresh every 5 seconds to check for status updates
     const interval = setInterval(() => {
-      fetchPendingTransactions();
+      fetchPendingTransactions(false);
     }, 5000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const fetchPendingTransactions = async () => {
+  const fetchPendingTransactions = async (showLoading = true) => {
     try {
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push("/login");
