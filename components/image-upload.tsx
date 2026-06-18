@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { imagekitService } from "@/lib/imagekit-service";
@@ -40,6 +40,8 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const id = useId();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,10 +125,10 @@ export function ImageUpload({
             onChange={handleFileSelect}
             disabled={disabled || uploading}
             className="hidden"
-            id={`image-upload-${Math.random()}`}
+            id={id}
           />
           <label
-            htmlFor={`image-upload-${Math.random()}`}
+            htmlFor={id}
             className={cn(
               "cursor-pointer flex flex-col items-center gap-2",
               (disabled || uploading) && "opacity-50 cursor-not-allowed"
