@@ -473,6 +473,7 @@ export default function Dashboard() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center"
+                      onClick={() => router.push("/deposit")}
                     >
                       <ArrowDownLeft className="h-6 w-6 mb-2" />
                       Request
@@ -480,6 +481,7 @@ export default function Dashboard() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center"
+                      onClick={() => router.push("/deposit")}
                     >
                       <Building className="h-6 w-6 mb-2" />
                       Bank Details
