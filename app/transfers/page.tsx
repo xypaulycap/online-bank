@@ -186,12 +186,16 @@ export default function Transactions() {
         setIsPinDialogOpen(true);
       }
     } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message,
-      });
+      if (err.message === 'TRANSFER_DISABLED') {
+        setIsWarningDialogOpen(true);
+      } else {
+        setError(err.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -217,7 +221,12 @@ export default function Transactions() {
       setIsOtpDialogOpen(false);
       router.push("/dashboard");
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message });
+      if (err.message === 'TRANSFER_DISABLED') {
+        setIsOtpDialogOpen(false);
+        setIsWarningDialogOpen(true);
+      } else {
+        toast({ variant: "destructive", title: "Error", description: err.message });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -290,12 +299,17 @@ export default function Transactions() {
         setIsPinDialogOpen(false);
         router.push("/dashboard");
       } catch (err: any) {
-        setError(err.message);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: err.message,
-        });
+        if (err.message === 'TRANSFER_DISABLED') {
+          setIsPinDialogOpen(false);
+          setIsWarningDialogOpen(true);
+        } else {
+          setError(err.message);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: err.message,
+          });
+        }
         setIsLoading(false);
       }
     } else {
@@ -331,12 +345,17 @@ export default function Transactions() {
         setIsPinDialogOpen(false);
         router.push("/dashboard");
       } catch (err: any) {
-        setError(err.message);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: err.message,
-        });
+        if (err.message === 'TRANSFER_DISABLED') {
+          setIsPinDialogOpen(false);
+          setIsWarningDialogOpen(true);
+        } else {
+          setError(err.message);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: err.message,
+          });
+        }
         setIsLoading(false);
       }
     }
