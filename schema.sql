@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   can_transfer BOOLEAN NOT NULL DEFAULT TRUE,
   currency VARCHAR(3) NOT NULL DEFAULT 'USD',
   is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  admin_bank_details JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

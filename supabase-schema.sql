@@ -55,17 +55,24 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- User Profiles table (extends auth.users)
-CREATE TABLE IF NOT EXISTS user_profiles (
+CREATE TABLE IF NOT EXISTS public.user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email VARCHAR(255) UNIQUE,
   username VARCHAR(150) UNIQUE,
   first_name VARCHAR(100),
   last_name VARCHAR(100),
   phone_number VARCHAR(20),
   address TEXT,
   date_of_birth DATE,
-  is_admin BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  profile_picture TEXT,
+  transfer_pin VARCHAR(255),
+  transfer_pin_2 VARCHAR(255),
+  can_transfer BOOLEAN NOT NULL DEFAULT TRUE,
+  currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+  is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  admin_bank_details JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Enable Row Level Security (RLS)

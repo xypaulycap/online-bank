@@ -42,6 +42,19 @@ export const adminUserService = {
     return data
   },
 
+  updateUserBankDetails: async (userId: string, bankDetails: any) => {
+    await requireAdmin()
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ admin_bank_details: bankDetails })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   deleteUser: async (userId: string) => {
     await requireAdmin()
     // Note: User deletion from auth.users requires server-side API route with service role

@@ -100,7 +100,20 @@ export default function DepositPage() {
       }
 
       try {
-        const details = await publicSettingsService.getSetting('bank_details');
+        // Fetch user profile first for user-specific bank details
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('admin_bank_details')
+          .eq('id', session.user.id)
+          .single();
+          
+        let details = profile?.admin_bank_details;
+        
+        // Check if details is an empty object or has empty fields, fallback if needed
+        if (!details || (!details.account_number && !details.bank_name)) {
+          details = await publicSettingsService.getSetting('bank_details');
+        }
+
         if (details) {
           setAdminBankDetails({
             account_number: details.account_number || "N/A",

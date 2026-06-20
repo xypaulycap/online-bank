@@ -41,6 +41,7 @@ interface User {
   is_admin: boolean;
   currency?: string;
   can_transfer?: boolean;
+  admin_bank_details?: any;
   created_at: string;
 }
 
@@ -56,6 +57,8 @@ export default function AdminUsersPage() {
   const [pinForm, setPinForm] = useState({ pin: "", confirmPin: "" });
   const [currencyForm, setCurrencyForm] = useState({ currency: "USD" });
   const [editForm, setEditForm] = useState({ first_name: "", last_name: "", username: "", is_admin: false, currency: "USD" });
+  const [isBankDetailsDialogOpen, setIsBankDetailsDialogOpen] = useState(false);
+  const [bankDetailsForm, setBankDetailsForm] = useState({ account_number: "", bank_name: "", account_name: "", routing_number: "" });
   const { toast } = useToast();
 
   const currencies = [
@@ -255,6 +258,31 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleOpenBankDetails = (user: User) => {
+    setSelectedUser(user);
+    setBankDetailsForm(user.admin_bank_details || { account_number: "", bank_name: "", account_name: "", routing_number: "" });
+    setIsBankDetailsDialogOpen(true);
+  };
+
+  const handleSaveBankDetails = async () => {
+    if (!selectedUser) return;
+    try {
+      await adminUserService.updateUserBankDetails(selectedUser.id, bankDetailsForm);
+      toast({
+        title: "Success",
+        description: "User bank details updated successfully",
+      });
+      setIsBankDetailsDialogOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message,
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="text-lg">Loading users...</div>;
   }
@@ -366,6 +394,14 @@ export default function AdminUsersPage() {
                         title={user.can_transfer === false ? "Enable Transfers" : "Disable Transfers"}
                       >
                         {user.can_transfer === false ? "🔒" : "🔓"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenBankDetails(user)}
+                        title="Set Bank Details"
+                      >
+                        🏦
                       </Button>
                     </div>
                   </TableCell>
@@ -542,6 +578,65 @@ export default function AdminUsersPage() {
                   Clear PIN {pinType}
                 </Button>
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBankDetailsDialogOpen} onOpenChange={setIsBankDetailsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Bank Details</DialogTitle>
+            <DialogDescription>
+              Set unique bank deposit details for {selectedUser?.first_name} {selectedUser?.last_name}. These will override the global settings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Bank Name</Label>
+              <Input
+                value={bankDetailsForm.bank_name}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, bank_name: e.target.value })}
+                placeholder="e.g. Chase Bank"
+              />
+            </div>
+            <div>
+              <Label>Account Name</Label>
+              <Input
+                value={bankDetailsForm.account_name}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_name: e.target.value })}
+                placeholder="e.g. John Doe"
+              />
+            </div>
+            <div>
+              <Label>Account Number</Label>
+              <Input
+                value={bankDetailsForm.account_number}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_number: e.target.value })}
+                placeholder="e.g. 1234567890"
+              />
+            </div>
+            <div>
+              <Label>Routing Number</Label>
+              <Input
+                value={bankDetailsForm.routing_number}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, routing_number: e.target.value })}
+                placeholder="e.g. 098765432"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveBankDetails} className="flex-1">
+                Save Details
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBankDetailsForm({ account_number: "", bank_name: "", account_name: "", routing_number: "" });
+                }}
+                title="Clear the form. Click Save after to delete the custom details."
+              >
+                Clear
+              </Button>
             </div>
           </div>
         </DialogContent>
