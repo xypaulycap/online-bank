@@ -696,9 +696,8 @@ export const adminTransactionService = {
     }
 
     // Update transaction status
-    const updatedDescription = adminNotes 
-      ? `${transaction.description || ''}\n\nAdmin Notes: ${adminNotes}`.trim()
-      : transaction.description
+    const updatedDescription = transaction.description
+
 
     console.log('Updating transaction status:', { transactionId, status, updatedDescription });
 
@@ -988,7 +987,7 @@ export const adminDepositRequestService = {
         account_id: request.account_id,
         transaction_type: 'deposit',
         amount: request.amount,
-        description: `Crypto deposit: ${request.crypto_symbol} - Approved by admin`,
+        description: `Crypto deposit: ${request.crypto_symbol}`,
         status: 'approved',
       })
       .select()
