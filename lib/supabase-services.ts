@@ -29,6 +29,7 @@ export interface User {
   currency?: string
   can_transfer?: boolean
   has_pin_2?: boolean
+  profile_picture?: string | null
 }
 
 export interface Account {
@@ -142,6 +143,7 @@ export const userService = {
       currency: profile?.currency || 'USD',
       can_transfer: profile?.can_transfer !== undefined ? profile.can_transfer : true,
       has_pin_2: !!profile?.transfer_pin && !!profile?.transfer_pin_2,
+      profile_picture: profile?.profile_picture || null,
     }
   },
 

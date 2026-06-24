@@ -57,14 +57,27 @@ export const adminUserService = {
 
   deleteUser: async (userId: string) => {
     await requireAdmin()
-    // Note: User deletion from auth.users requires server-side API route with service role
-    // For now, we'll just delete the profile (user will remain in auth but without profile)
-    // In production, create an API route: /api/admin/users/[id]/delete
-    const { error } = await supabase
-      .from('user_profiles')
-      .delete()
-      .eq('id', userId)
-    if (error) throw error
+    
+    // Call the server API route to fully delete from auth.users and public.user_profiles
+    const response = await fetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      let errorMsg = 'Failed to delete user';
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.error || errorMsg;
+      } catch (e) {
+        // Ignore json parse error
+      }
+      throw new Error(errorMsg);
+    }
+    
+    return await response.json();
   },
 
   setAdminStatus: async (userId: string, isAdmin: boolean) => {

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { getProfilePictureUrl } from "@/lib/image-utils";
 import {
   Bell,
   CreditCard,
@@ -35,6 +37,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  profile_picture?: string | null;
 }
 
 export function UserSidebar() {
@@ -55,6 +58,7 @@ export function UserSidebar() {
             email: userData.email,
             first_name: userData.first_name,
             last_name: userData.last_name,
+            profile_picture: userData.profile_picture || null,
           });
         } else {
           // User profile doesn't exist, try to get basic info from auth
@@ -66,6 +70,7 @@ export function UserSidebar() {
               email: user.email || '',
               first_name: user.user_metadata?.first_name || '',
               last_name: user.user_metadata?.last_name || '',
+              profile_picture: user.user_metadata?.profile_picture || null,
             });
           }
         }
@@ -90,6 +95,7 @@ export function UserSidebar() {
               email: user.email || '',
               first_name: user.user_metadata?.first_name || '',
               last_name: user.user_metadata?.last_name || '',
+              profile_picture: user.user_metadata?.profile_picture || null,
             });
           }
         } catch (authError) {
@@ -199,11 +205,21 @@ export function UserSidebar() {
       <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-3">
-              <span className="text-sm font-medium">
-                {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
-              </span>
-            </div>
+            {user?.profile_picture ? (
+              <Image
+                src={getProfilePictureUrl(user.profile_picture, 32)}
+                alt="Profile Picture"
+                width={32}
+                height={32}
+                className="rounded-full mr-3 object-cover"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-3">
+                <span className="text-sm font-medium">
+                  {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
+                </span>
+              </div>
+            )}
             <div>
               <p className="text-sm font-medium">
                 {user ? `${user.first_name} ${user.last_name}` : "User"}

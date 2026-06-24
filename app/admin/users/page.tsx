@@ -51,6 +51,8 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
   const [pinType, setPinType] = useState<1 | 2>(1);
   const [isCurrencyDialogOpen, setIsCurrencyDialogOpen] = useState(false);
@@ -117,6 +119,26 @@ export default function AdminUsersPage() {
         description: "User updated successfully",
       });
       setIsEditDialogOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message,
+      });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    try {
+      await adminUserService.deleteUser(userToDelete.id);
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
       fetchUsers();
     } catch (err: any) {
       toast({
@@ -403,6 +425,17 @@ export default function AdminUsersPage() {
                       >
                         🏦
                       </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setUserToDelete(user);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        title="Delete User"
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -638,6 +671,25 @@ export default function AdminUsersPage() {
                 Clear
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {userToDelete?.first_name} {userToDelete?.last_name}? This action cannot be undone and will permanently remove their profile and authentication access.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-4">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Confirm Delete
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

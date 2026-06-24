@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { getProfilePictureUrl } from "@/lib/image-utils";
 import {
   Bell,
   CreditCard,
@@ -42,6 +44,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  profile_picture?: string | null;
 }
 
 interface Notification {
@@ -329,11 +332,21 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-2">
-                  <span className="font-medium">
-                    {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
-                  </span>
-                </div>
+                {user?.profile_picture ? (
+                  <Image
+                    src={getProfilePictureUrl(user.profile_picture, 40)}
+                    alt="Profile Picture"
+                    width={40}
+                    height={40}
+                    className="rounded-full mr-2 object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-2">
+                    <span className="font-medium">
+                      {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
+                    </span>
+                  </div>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 h-auto font-medium">
