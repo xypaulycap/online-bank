@@ -488,5 +488,6 @@ INSERT INTO transaction_categories (name, description) VALUES
   ('Bills & Utilities', 'Rent, utilities, subscriptions'),
   ('Entertainment', 'Movies, games, events'),
   ('Healthcare', 'Medical expenses, pharmacy'),
-  ('Income', 'Salary, freelance, refunds')
+  ('Income', 'Salary, freelance, refunds'),
+  ('Charges', 'Bank charges, fees, and penalties')
 ON CONFLICT (name) DO NOTHING;
