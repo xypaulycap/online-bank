@@ -763,6 +763,24 @@ export const adminTransactionService = {
     if (error) throw error
     return data
   },
+
+  updateTransactionAmount: async (transactionId: number, newAmount: number) => {
+    await requireAdmin()
+
+    if (isNaN(newAmount) || newAmount <= 0) {
+      throw new Error('Invalid amount')
+    }
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .update({ amount: newAmount })
+      .eq('id', transactionId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
 }
 
 // Admin Notification Services

@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Check, X, AlertCircle, Calendar } from "lucide-react";
+import { Plus, Check, X, AlertCircle, Calendar, Pencil } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Transaction {
@@ -113,6 +113,8 @@ export default function AdminTransactionsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDateDialogOpen, setIsDateDialogOpen] = useState(false);
   const [dateForm, setDateForm] = useState({ date: "", time: "" });
+  const [isAmountDialogOpen, setIsAmountDialogOpen] = useState(false);
+  const [amountForm, setAmountForm] = useState({ amount: "" });
   const [createForm, setCreateForm] = useState({
     transaction_type: "deposit",
     account_id: "",
@@ -279,6 +281,41 @@ export default function AdminTransactionsPage() {
         variant: "destructive",
         title: "Error",
         description: err.message || 'Failed to update transaction date',
+      });
+    }
+  };
+
+  const handleEditAmount = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setAmountForm({ amount: transaction.amount.toString() });
+    setIsAmountDialogOpen(true);
+  };
+
+  const handleSaveAmount = async () => {
+    if (!selectedTransaction) return;
+
+    try {
+      const amountNum = parseFloat(amountForm.amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        throw new Error("Invalid amount");
+      }
+      
+      await adminTransactionService.updateTransactionAmount(selectedTransaction.id, amountNum);
+      
+      toast({
+        title: "Success",
+        description: "Transaction amount updated successfully",
+      });
+      
+      setIsAmountDialogOpen(false);
+      setSelectedTransaction(null);
+      setAmountForm({ amount: "" });
+      fetchTransactions();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || 'Failed to update transaction amount',
       });
     }
   };
@@ -659,7 +696,23 @@ export default function AdminTransactionsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-semibold">
-                    ${parseFloat(transaction.amount).toFixed(2)}
+                    <div className="flex items-center gap-2">
+                      ${parseFloat(transaction.amount).toFixed(2)}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditAmount(transaction);
+                        }}
+                        title="Edit Amount"
+                        className="h-6 w-6 p-0"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>{transaction.description || "-"}</TableCell>
                   <TableCell>
@@ -948,6 +1001,56 @@ export default function AdminTransactionsPage() {
                   disabled={!dateForm.date || !dateForm.time}
                 >
                   Update Date
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAmountDialogOpen} onOpenChange={setIsAmountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Transaction Amount</DialogTitle>
+            <DialogDescription>
+              Update the amount for transaction #{selectedTransaction?.id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="amount">Amount</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={amountForm.amount}
+                  onChange={(e) => setAmountForm({ amount: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Current amount: ${parseFloat(selectedTransaction.amount).toFixed(2)}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAmountDialogOpen(false);
+                    setSelectedTransaction(null);
+                    setAmountForm({ amount: "" });
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveAmount}
+                  className="flex-1"
+                  disabled={!amountForm.amount || parseFloat(amountForm.amount) <= 0}
+                >
+                  Update Amount
                 </Button>
               </div>
             </div>
