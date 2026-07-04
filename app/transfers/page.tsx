@@ -48,7 +48,6 @@ export default function Transactions() {
   const [recipientName, setRecipientName] = useState<string>("");
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
-  const [routingNumber, setRoutingNumber] = useState<string>("");
   const [swiftBic, setSwiftBic] = useState<string>("");
   const [transferReference, setTransferReference] = useState<string>("");
 
@@ -167,7 +166,7 @@ export default function Transactions() {
         setPendingTransferData({ action: 'local_transfer', accountIdNum, amountNum, description, categoryIdNum, bankDetails });
         setIsPinDialogOpen(true);
       } else if (action === 'international_transfer') {
-        if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !routingNumber || !swiftBic) {
+        if (!recipientName || !recipientAddress || !bankName || !bankAddress || !accountNumber || !swiftBic) {
           throw new Error("Please fill in all required fields");
         }
 
@@ -177,7 +176,6 @@ export default function Transactions() {
           bank_name: bankName,
           bank_address: bankAddress,
           account_number: accountNumber,
-          routing_number: routingNumber,
           swift_bic: swiftBic,
           transfer_reference: transferReference
         };
@@ -583,10 +581,6 @@ export default function Transactions() {
                   <div>
                     <Label htmlFor="bank_address_intl">Bank Address</Label>
                     <Input id="bank_address_intl" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} placeholder="Enter bank address" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="routing_number_intl">Routing Number</Label>
-                    <Input id="routing_number_intl" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="Enter routing number" required />
                   </div>
                   <div>
                     <Label htmlFor="swift_bic">SWIFT/BIC</Label>

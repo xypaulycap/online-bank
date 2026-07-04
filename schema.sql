@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.accounts (
 CREATE TABLE IF NOT EXISTS public.transactions (
   id SERIAL PRIMARY KEY,
   account_id INTEGER NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  transaction_type VARCHAR(20) NOT NULL,
+  transaction_type VARCHAR(50) NOT NULL,
   amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
   description TEXT,
   category_id INTEGER REFERENCES public.transaction_categories(id) ON DELETE SET NULL,
