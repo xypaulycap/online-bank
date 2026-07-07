@@ -125,6 +125,7 @@ export async function sendTransactionReceiptEmail(
   userEmail: string,
   transactionData: {
     type: string;
+    status?: string;
     amount: number;
     description?: string;
     accountNumber: string;
@@ -179,6 +180,12 @@ export async function sendTransactionReceiptEmail(
               <span style="font-weight: 600; color: #4b5563;">Transaction Type:</span>
               <span style="font-weight: 700; color: #1f2937;">${getTransactionTypeLabel(transactionData.type)}</span>
             </div>
+            ${transactionData.status ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-weight: 600; color: #4b5563;">Status:</span>
+              <span style="font-weight: 700; color: #1f2937; text-transform: capitalize;">${transactionData.status}</span>
+            </div>
+            ` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-weight: 600; color: #4b5563;">Amount:</span>
               <span style="font-weight: 700; font-size: 18px; color: ${amountColor};">${amountDisplay}</span>

@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     // Prepare transaction data for email
     const transactionData = {
       type: transaction.transaction_type,
+      status: transaction.status,
       amount: parseFloat(transaction.amount.toString()),
       description: transaction.description || undefined,
       accountNumber: transaction.account.account_number,

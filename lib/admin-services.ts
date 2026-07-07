@@ -261,7 +261,7 @@ export const adminAccountService = {
     }
   },
 
-  updateAccount: async (accountId: number, updates: { balance?: number; is_active?: boolean; transaction_limit?: number; daily_limit?: number }) => {
+  updateAccount: async (accountId: number, updates: { balance?: number; is_active?: boolean; transaction_limit?: number; daily_limit?: number; account_number?: string }) => {
     await requireAdmin()
     const { data, error } = await supabase
       .from('accounts')

@@ -75,7 +75,7 @@ export default function AdminAccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLimitDialogOpen, setIsLimitDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ balance: "", is_active: true });
+  const [editForm, setEditForm] = useState({ balance: "", is_active: true, account_number: "" });
   const [limitForm, setLimitForm] = useState({ transaction_limit: "", daily_limit: "" });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ 
@@ -165,6 +165,7 @@ export default function AdminAccountsPage() {
     setEditForm({
       balance: account.balance.toString(),
       is_active: account.is_active,
+      account_number: account.account_number,
     });
     setIsEditDialogOpen(true);
   };
@@ -234,6 +235,7 @@ export default function AdminAccountsPage() {
       await adminAccountService.updateAccount(selectedAccount.id, {
         balance: parseFloat(editForm.balance),
         is_active: editForm.is_active,
+        account_number: editForm.account_number,
       });
       toast({
         title: "Success",
@@ -509,6 +511,16 @@ export default function AdminAccountsPage() {
             <DialogDescription>Update account information</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>Account Number</Label>
+              <Input
+                value={editForm.account_number}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, account_number: e.target.value })
+                }
+                placeholder="Account Number"
+              />
+            </div>
             <div>
               <Label>Balance</Label>
               <Input
