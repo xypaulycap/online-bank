@@ -309,7 +309,7 @@ export default function DepositPage() {
               <Hash className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Routing Number</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Bank Swift Code</p>
               <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.routing_number}</p>
             </div>
           </div>
