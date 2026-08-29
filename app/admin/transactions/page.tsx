@@ -115,6 +115,16 @@ export default function AdminTransactionsPage() {
   const [dateForm, setDateForm] = useState({ date: "", time: "" });
   const [isAmountDialogOpen, setIsAmountDialogOpen] = useState(false);
   const [amountForm, setAmountForm] = useState({ amount: "" });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    transaction_type: "",
+    amount: "",
+    description: "",
+    status: "",
+    category_id: "",
+    date: "",
+    time: "",
+  });
   const [createForm, setCreateForm] = useState({
     transaction_type: "deposit",
     account_id: "",
@@ -316,6 +326,64 @@ export default function AdminTransactionsPage() {
         variant: "destructive",
         title: "Error",
         description: err.message || 'Failed to update transaction amount',
+      });
+    }
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    const date = new Date(transaction.timestamp);
+    const dateStr = date.toISOString().split('T')[0];
+    const timeStr = date.toTimeString().split(' ')[0].slice(0, 5); // HH:MM format
+
+    setSelectedTransaction(transaction);
+    setEditForm({
+      transaction_type: transaction.transaction_type,
+      amount: transaction.amount.toString(),
+      description: transaction.description || "",
+      status: transaction.status || "approved",
+      category_id: transaction.category?.id?.toString() || "",
+      date: dateStr,
+      time: timeStr,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedTransaction) return;
+
+    try {
+      const amountNum = parseFloat(editForm.amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        throw new Error("Invalid amount");
+      }
+
+      const dateTime = `${editForm.date}T${editForm.time}:00`;
+      const isoDate = new Date(dateTime).toISOString();
+      
+      const updates = {
+        transaction_type: editForm.transaction_type,
+        amount: amountNum,
+        description: editForm.description || null,
+        status: editForm.status,
+        category_id: editForm.category_id ? parseInt(editForm.category_id) : null,
+        timestamp: isoDate,
+      };
+
+      await adminTransactionService.updateTransaction(selectedTransaction.id, updates);
+      
+      toast({
+        title: "Success",
+        description: "Transaction updated successfully",
+      });
+      
+      setIsEditDialogOpen(false);
+      setSelectedTransaction(null);
+      fetchTransactions();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || 'Failed to update transaction',
       });
     }
   };
@@ -786,44 +854,57 @@ export default function AdminTransactionsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {(!transaction.status || transaction.status === 'pending') ? (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Approve button clicked:', transaction.id);
-                            handleReviewTransaction(transaction, "approve");
-                          }}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Reject button clicked:', transaction.id);
-                            handleReviewTransaction(transaction, "reject");
-                          }}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {transaction.status === 'approved' ? 'Approved' : 
-                         transaction.status === 'rejected' ? 'Rejected' : 
-                         transaction.status}
-                      </span>
-                    )}
+                    <div className="flex flex-col gap-2">
+                      {(!transaction.status || transaction.status === 'pending') ? (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleReviewTransaction(transaction, "approve");
+                            }}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleReviewTransaction(transaction, "reject");
+                            }}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {transaction.status === 'approved' ? 'Approved' : 
+                           transaction.status === 'rejected' ? 'Rejected' : 
+                           transaction.status}
+                        </span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditTransaction(transaction);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
                     );
@@ -1051,6 +1132,142 @@ export default function AdminTransactionsPage() {
                   disabled={!amountForm.amount || parseFloat(amountForm.amount) <= 0}
                 >
                   Update Amount
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Transaction #{selectedTransaction?.id}</DialogTitle>
+            <DialogDescription>
+              Modify all fields for this transaction. Note: Changing status will not automatically affect balances here.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Transaction Type</Label>
+                  <Select
+                    value={editForm.transaction_type}
+                    onValueChange={(value) => setEditForm({ ...editForm, transaction_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deposit">Deposit</SelectItem>
+                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                      <SelectItem value="transfer">Transfer</SelectItem>
+                      <SelectItem value="local_transfer">Local Transfer</SelectItem>
+                      <SelectItem value="wire_transfer">Wire Transfer</SelectItem>
+                      <SelectItem value="international_transfer">International Transfer</SelectItem>
+                      <SelectItem value="payment">Payment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={editForm.amount}
+                    onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={editForm.status}
+                    onValueChange={(value) => setEditForm({ ...editForm, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Select
+                    value={editForm.category_id || "none"}
+                    onValueChange={(value) => setEditForm({ ...editForm, category_id: value === "none" ? "" : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-date">Date</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-time">Time</Label>
+                  <Input
+                    id="edit-time"
+                    type="time"
+                    value={editForm.time}
+                    onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="Transaction description"
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="flex-1"
+                  disabled={!editForm.amount || parseFloat(editForm.amount) <= 0 || !editForm.date || !editForm.time}
+                >
+                  Save Changes
                 </Button>
               </div>
             </div>
