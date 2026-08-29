@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  serverExternalPackages: ['pdfkit', 'pdfkit-table'],
 }
 
 export default nextConfig

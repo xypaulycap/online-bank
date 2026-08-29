@@ -31,7 +31,7 @@ export default function StatementPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchAccounts = async () => {
+    const fetchAccountsAndProfile = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -39,19 +39,26 @@ export default function StatementPage() {
           return;
         }
 
-        const accountsData = await accountService.getAccounts();
+        const [accountsData, { data: profile }] = await Promise.all([
+          accountService.getAccounts(),
+          supabase.from('user_profiles').select('currency').eq('id', session.user.id).single()
+        ]);
+        
         setAccounts(accountsData);
+        if (profile?.currency) {
+          setUserCurrency(profile.currency);
+        }
         if (accountsData.length > 0) {
           setSelectedAccountId(accountsData[0].id.toString());
         }
       } catch (error) {
-        console.error("Failed to load accounts:", error);
-        toast.error("Failed to load accounts");
+        console.error("Failed to load data:", error);
+        toast.error("Failed to load data");
       } finally {
         setIsFetching(false);
       }
     };
-    fetchAccounts();
+    fetchAccountsAndProfile();
   }, [router]);
 
   const handleRequestStatement = async (e: React.FormEvent) => {

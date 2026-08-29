@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit-table';
 import { sendEmail } from '@/lib/email-service';
 import { formatCurrency } from '@/lib/utils';
+import path from 'path';
+import fs from 'fs';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +86,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
     }
 
+    // Calculate Summary
+    let totalCredits = 0;
+    let totalDebits = 0;
+    if (transactions && transactions.length > 0) {
+      transactions.forEach((tx: any) => {
+        const isDebit = ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(tx.transaction_type);
+        if (isDebit) {
+          totalDebits += parseFloat(tx.amount);
+        } else {
+          totalCredits += parseFloat(tx.amount);
+        }
+      });
+    }
+
     // 4. Generate PDF
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
@@ -96,32 +112,57 @@ export async function POST(req: NextRequest) {
           resolve(pdfData);
         });
 
-        // Header
-        doc.fontSize(24).fillColor('#2563eb').text('Valtier Financial Group', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(16).fillColor('#1f2937').text('Statement of Account', { align: 'center' });
+        const currency = userProfile.currency || 'USD';
+
+        // Add Logo
+        const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+        if (fs.existsSync(logoPath)) {
+          doc.image(logoPath, 50, 45, { width: 140 });
+        }
+
+        // Header Info (Right Aligned)
+        doc.fontSize(20).fillColor('#2563eb').text('Valtier Financial Group', 200, 50, { align: 'right' });
+        doc.fontSize(10).fillColor('#6b7280').text('123 Financial District, NY 10004', { align: 'right' });
+        doc.text('Phone: +1 (800) 123-4567', { align: 'right' });
+        doc.text('Email: info@valtierfingroup.com', { align: 'right' });
+        doc.text('Web: www.valtierfingroup.com', { align: 'right' });
+        
+        doc.moveDown(3);
+
+        // Title
+        doc.fontSize(16).fillColor('#1f2937').text('STATEMENT OF ACCOUNT', 50, doc.y, { align: 'center' });
         doc.moveDown(2);
 
         // Account & User Details
-        doc.fontSize(12).fillColor('#4b5563');
+        const currentY = doc.y;
         
         // Left Column (User Info)
-        doc.text(`Account Holder: ${userProfile.first_name} ${userProfile.last_name}`);
+        doc.fontSize(10).fillColor('#4b5563');
+        doc.font('Helvetica-Bold').text('ACCOUNT TO:', 50, currentY);
+        doc.font('Helvetica').text(`${userProfile.first_name} ${userProfile.last_name}`);
         if (userProfile.address) {
-          doc.text(`Address: ${userProfile.address.replace(/\n/g, ', ')}`);
+          doc.text(`${userProfile.address.replace(/\n/g, ', ')}`);
         }
-        doc.text(`Email: ${userProfile.email}`);
-        
-        doc.moveUp(3);
+        doc.text(`${userProfile.email}`);
         
         // Right Column (Account Info)
-        doc.text(`Account Type: ${account.account_types?.name || 'Account'}`, { align: 'right' });
-        doc.text(`Account Number: ${account.account_number}`, { align: 'right' });
-        const currency = userProfile.currency || 'USD';
-        doc.text(`Current Balance: ${formatCurrency(parseFloat(account.balance), currency)}`, { align: 'right' });
-        doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.font('Helvetica-Bold').text('ACCOUNT DETAILS:', 350, currentY);
+        doc.font('Helvetica').text(`Account Type: ${account.account_types?.name || 'Account'}`, 350, doc.y);
+        doc.text(`Account Number: ${account.account_number}`, 350, doc.y);
+        doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, 350, doc.y);
+        doc.text(`Statement Period: ${periodDays === 'all' ? 'All Time' : `Last ${periodDays} Days`}`, 350, doc.y);
         
-        doc.moveDown(3);
+        doc.moveDown(2);
+
+        // Account Summary
+        doc.font('Helvetica-Bold').fontSize(12).fillColor('#1f2937').text('Account Summary', 50, doc.y);
+        doc.moveDown(0.5);
+        doc.font('Helvetica').fontSize(10).fillColor('#4b5563');
+        doc.text(`Total Credits: ${formatCurrency(totalCredits, currency)}`);
+        doc.text(`Total Debits: ${formatCurrency(totalDebits, currency)}`);
+        doc.font('Helvetica-Bold').fillColor('#111827').text(`Closing Balance: ${formatCurrency(parseFloat(account.balance), currency)}`);
+        
+        doc.moveDown(2);
 
         // Transactions Table
         if (transactions && transactions.length > 0) {
@@ -154,7 +195,7 @@ export async function POST(req: NextRequest) {
 
         // Footer
         doc.moveDown(2);
-        doc.fontSize(10).fillColor('#9ca3af').text('This is an automatically generated statement. If you have any questions, please contact our support.', { align: 'center' });
+        doc.fontSize(8).fillColor('#9ca3af').text('This is an automatically generated statement by Valtier Financial Group. If you have any questions or notice any discrepancies, please contact our support team immediately. Thank you for banking with us.', { align: 'center' });
 
         doc.end();
       } catch (err) {
