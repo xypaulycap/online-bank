@@ -36,6 +36,7 @@ export interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  attachments?: any[];
 }
 
 /**
@@ -49,6 +50,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ''), // Plain text fallback
+      attachments: options.attachments,
     };
 
     console.log('Attempting to send email:', {

@@ -486,6 +486,14 @@ export default function Dashboard() {
                       <Building className="h-6 w-6 mb-2" />
                       Bank Details
                     </Button>
+                    <Button
+                      variant="outline"
+                      className="h-24 flex flex-col items-center justify-center"
+                      onClick={() => router.push("/statement")}
+                    >
+                      <FileText className="h-6 w-6 mb-2" />
+                      Statement
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
