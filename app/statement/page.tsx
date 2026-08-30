@@ -28,6 +28,7 @@ export default function StatementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [userCurrency, setUserCurrency] = useState("USD");
   const router = useRouter();
 
   useEffect(() => {
@@ -174,7 +175,7 @@ export default function StatementPage() {
                     <SelectContent>
                       {accounts.map((account) => (
                         <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.account_type?.name} (**** {account.account_number.slice(-4)}) - {formatCurrency(parseFloat(account.balance), 'USD')}
+                          {account.account_type?.name} (**** {account.account_number.slice(-4)}) - {formatCurrency(parseFloat(account.balance), userCurrency)}
                         </SelectItem>
                       ))}
                     </SelectContent>
