@@ -266,12 +266,13 @@ export default function KYCPage() {
         // Create new submission
         await kycService.createKYCSubmission(formData);
         toast({
-          title: "Success",
+          title: "Submission Received!",
           description:
-            "KYC submission created successfully. Admin will review your submission.",
+            "Your KYC submission was created successfully and is now pending admin review.",
         });
       }
-      fetchKYCSubmission();
+      await fetchKYCSubmission();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       toast({
         variant: "destructive",
@@ -336,6 +337,24 @@ export default function KYCPage() {
                   {kycSubmission.approved_at &&
                     new Date(kycSubmission.approved_at).toLocaleDateString()}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {(kycSubmission?.status === "pending" || kycSubmission?.status === "under_review") && (
+          <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="text-blue-900 dark:text-blue-200 font-semibold">
+                    KYC Verification Submitted & Pending Review
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    We have received your KYC documents. Your submission is currently under review by our compliance team.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

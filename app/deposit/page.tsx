@@ -100,10 +100,10 @@ export default function DepositPage() {
       }
 
       try {
-        // Fetch user profile first for user-specific bank details
+        // Fetch user profile first for user-specific bank details and name
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('admin_bank_details')
+          .select('first_name, last_name, admin_bank_details')
           .eq('id', session.user.id)
           .single();
           
@@ -114,19 +114,25 @@ export default function DepositPage() {
           details = await publicSettingsService.getSetting('bank_details');
         }
 
+        const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
+
         if (details) {
           setAdminBankDetails({
             account_number: details.account_number || "N/A",
-            bank_name: details.bank_name || "N/A",
-            account_name: details.account_name || "N/A",
-            routing_number: details.routing_number || "N/A",
+            bank_name: details.bank_name || "Valtier Financial Group",
+            account_name: details.account_name && details.account_name !== "USER" && details.account_name !== "Loading..."
+              ? details.account_name 
+              : (fullName || details.account_name || "N/A"),
+            routing_number: details.routing_number && details.routing_number !== "NA" 
+              ? details.routing_number 
+              : "SWISSXXXXXXXX",
           });
         } else {
           setAdminBankDetails({
-            account_number: "704 337 8748",
-            bank_name: "OPay Digital Service Limited (OPay)",
-            account_name: "EWEAN PATRICK AIYOHUYIN",
-            routing_number: "N/A",
+            account_number: "704 337 5669",
+            bank_name: "Valtier Financial Group",
+            account_name: fullName || "Valtier Client",
+            routing_number: "SWISSXXXXXXXX",
           });
         }
       } catch (settingsErr) {
