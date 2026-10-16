@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { BankLogo } from "@/components/bank-logo";
+import { GoogleTranslate } from "@/components/google-translate";
 
 export function CredixNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -166,6 +167,9 @@ export function CredixNavbar() {
 
             {/* Desktop Action Buttons */}
             <div className="hidden lg:flex items-center space-x-3">
+              {/* Google Translate */}
+              <GoogleTranslate id="google_translate_desktop" />
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
@@ -326,6 +330,11 @@ export function CredixNavbar() {
                 <i className="fa-solid fa-chevron-right ml-auto text-xs opacity-0 group-hover:opacity-100 transition-all duration-300"></i>
               </Link>
 
+              {/* Google Translate for Mobile */}
+              <div className="pt-2">
+                <GoogleTranslate id="google_translate_mobile" />
+              </div>
+
               {/* Dark Mode Toggle for Mobile */}
               <div className="pt-4 mt-4 border-t border-primary-700/50">
                 <button
@@ -350,4 +359,6 @@ export function CredixNavbar() {
     </>
   );
 }
+
+
 

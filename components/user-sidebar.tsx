@@ -30,6 +30,7 @@ import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { BankLogo } from "@/components/bank-logo";
+import { GoogleTranslate } from "@/components/google-translate";
 
 interface User {
   id: string;
@@ -229,6 +230,10 @@ export function UserSidebar() {
               </p>
             </div>
           </div>
+        </div>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs text-gray-500 dark:text-gray-400">Language</span>
+          <GoogleTranslate id={mobile ? "google_translate_user_mobile" : "google_translate_user_desktop"} />
         </div>
         <Button
           variant="outline"

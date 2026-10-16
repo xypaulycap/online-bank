@@ -15,6 +15,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BankLogo } from "@/components/bank-logo";
+import { GoogleTranslate } from "@/components/google-translate";
 
 interface NavigationProps {
   children: React.ReactNode;
@@ -109,7 +110,8 @@ export function Navigation({ children }: NavigationProps) {
                 <Link href="/login">Login</Link>
               </Button>
             </div>
-            <nav className="flex items-center">
+            <nav className="flex items-center space-x-2">
+              <GoogleTranslate id="google_translate_nav" />
               <ThemeToggle />
             </nav>
           </div>

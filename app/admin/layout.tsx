@@ -6,6 +6,7 @@ import Link from "next/link";
 import { isAdmin } from "@/lib/admin-utils";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { GoogleTranslate } from "@/components/google-translate";
 import {
   LayoutDashboard,
   Users,
@@ -137,6 +138,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </nav>
         <div className="mt-8 pt-8 border-t border-border">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Language</span>
+            <GoogleTranslate id="google_translate_admin" />
+          </div>
           <Link href="/dashboard">
             <Button variant="ghost" className="w-full justify-start mb-2">
               Back to Dashboard
