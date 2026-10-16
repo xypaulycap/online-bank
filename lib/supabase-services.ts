@@ -111,6 +111,22 @@ export const authService = {
     if (error) throw error
     return user
   },
+
+  resetPasswordForEmail: async (email: string, redirectTo?: string) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo || (typeof window !== 'undefined' ? window.location.origin + '/reset-password' : ''),
+    })
+    if (error) throw error
+    return data
+  },
+
+  updatePassword: async (password: string) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password,
+    })
+    if (error) throw error
+    return data
+  },
 }
 
 // User Services
