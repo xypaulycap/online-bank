@@ -206,6 +206,62 @@ export function GoogleTranslate({
   // };
 
   
+// const handleLanguageChange = (newLang: string) => {
+//   setCurrentLang(newLang);
+
+//   try {
+//     localStorage.setItem("preferred_language", newLang);
+//   } catch {}
+
+//   const hostname = window.location.hostname;
+//   const isLocalhost =
+//     hostname === "localhost" || hostname === "127.0.0.1";
+
+//   // Remove old cookie variants so a stale language cannot override
+//   // the user's new selection.
+//   const expireCookie = (domain?: string) => {
+//     const domainPart = domain ? `; domain=${domain}` : "";
+//     document.cookie =
+//       `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}`;
+//   };
+
+//   expireCookie();
+
+//   if (hostname) {
+//     expireCookie(hostname);
+
+//     if (!isLocalhost) {
+//       expireCookie(`.${hostname}`);
+//     }
+//   }
+
+//   // Google Translate uses an empty target value to return to English.
+//   if (newLang !== "en") {
+//     const cookieValue = `/en/${newLang}`;
+
+//     document.cookie = `googtrans=${cookieValue}; path=/; SameSite=Lax`;
+
+//     if (!isLocalhost && hostname) {
+//       document.cookie =
+//         `googtrans=${cookieValue}; path=/; domain=.${hostname}; SameSite=Lax`;
+//     }
+//   }
+
+//   // Trigger Google Translate directly. Do not reload the page.
+//   const translateSelect = document.querySelector(
+//     ".goog-te-combo"
+//   ) as HTMLSelectElement | null;
+
+//   if (translateSelect) {
+//     translateSelect.value = newLang === "en" ? "" : newLang;
+
+//     translateSelect.dispatchEvent(
+//       new Event("change", { bubbles: true })
+//     );
+//   }
+// };
+
+
 const handleLanguageChange = (newLang: string) => {
   setCurrentLang(newLang);
 
@@ -217,14 +273,14 @@ const handleLanguageChange = (newLang: string) => {
   const isLocalhost =
     hostname === "localhost" || hostname === "127.0.0.1";
 
-  // Remove old cookie variants so a stale language cannot override
-  // the user's new selection.
   const expireCookie = (domain?: string) => {
     const domainPart = domain ? `; domain=${domain}` : "";
+
     document.cookie =
       `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}`;
   };
 
+  // Remove previous cookie values.
   expireCookie();
 
   if (hostname) {
@@ -235,31 +291,47 @@ const handleLanguageChange = (newLang: string) => {
     }
   }
 
-  // Google Translate uses an empty target value to return to English.
-  if (newLang !== "en") {
-    const cookieValue = `/en/${newLang}`;
-
-    document.cookie = `googtrans=${cookieValue}; path=/; SameSite=Lax`;
-
-    if (!isLocalhost && hostname) {
-      document.cookie =
-        `googtrans=${cookieValue}; path=/; domain=.${hostname}; SameSite=Lax`;
-    }
-  }
-
-  // Trigger Google Translate directly. Do not reload the page.
   const translateSelect = document.querySelector(
     ".goog-te-combo"
   ) as HTMLSelectElement | null;
 
-  if (translateSelect) {
-    translateSelect.value = newLang === "en" ? "" : newLang;
+  if (newLang === "en") {
+    // Remove the saved target-language cookie.
+    try {
+      localStorage.setItem("preferred_language", "en");
+    } catch {}
 
+    // Select the original language in Google Translate.
+    if (translateSelect) {
+      translateSelect.value = "";
+      translateSelect.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    }
+
+    return;
+  }
+
+  // Save the selected target language.
+  const cookieValue = `/en/${newLang}`;
+
+  document.cookie =
+    `googtrans=${cookieValue}; path=/; SameSite=Lax`;
+
+  if (!isLocalhost && hostname) {
+    document.cookie =
+      `googtrans=${cookieValue}; path=/; domain=.${hostname}; SameSite=Lax`;
+  }
+
+  // Apply the new language without refreshing the page.
+  if (translateSelect) {
+    translateSelect.value = newLang;
     translateSelect.dispatchEvent(
       new Event("change", { bubbles: true })
     );
   }
 };
+
 
 
   const currentLangObj =
