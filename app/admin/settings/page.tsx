@@ -13,10 +13,15 @@ export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [bankDetails, setBankDetails] = useState({
+    bank_name: "SWISS PRIVATE BANK",
+    account_holder: "",
     account_number: "",
-    bank_name: "",
-    account_name: "",
-    routing_number: "",
+    iban: "",
+    swift_bic: "",
+    currency: "CHF / USD",
+    client_number: "",
+    bank_address: "Zurich, Switzerland",
+    account_type: "Private Current Account",
   });
   const { toast } = useToast();
 
@@ -30,10 +35,15 @@ export default function AdminSettingsPage() {
       const details = await adminSettingsService.getAdminSettings("bank_details");
       if (details) {
         setBankDetails({
+          bank_name: details.bank_name || "SWISS PRIVATE BANK",
+          account_holder: details.account_holder || details.account_name || "",
           account_number: details.account_number || "",
-          bank_name: details.bank_name || "",
-          account_name: details.account_name || "",
-          routing_number: details.routing_number || "",
+          iban: details.iban || "",
+          swift_bic: details.swift_bic || details.routing_number || "",
+          currency: details.currency || "CHF / USD",
+          client_number: details.client_number || "",
+          bank_address: details.bank_address || "Zurich, Switzerland",
+          account_type: details.account_type || "Private Current Account",
         });
       }
     } catch (error: any) {
@@ -51,7 +61,12 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await adminSettingsService.updateAdminSettings("bank_details", bankDetails);
+      const payload = {
+        ...bankDetails,
+        account_name: bankDetails.account_holder,
+        routing_number: bankDetails.swift_bic,
+      };
+      await adminSettingsService.updateAdminSettings("bank_details", payload);
       toast({
         title: "Settings Saved",
         description: "Admin bank details have been updated successfully.",
@@ -93,44 +108,96 @@ export default function AdminSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="account_number">Account Number</Label>
-            <Input
-              id="account_number"
-              value={bankDetails.account_number}
-              onChange={(e) => setBankDetails({ ...bankDetails, account_number: e.target.value })}
-              placeholder="e.g. 704 337 8748"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="bank_name">Bank Name</Label>
-            <Input
-              id="bank_name"
-              value={bankDetails.bank_name}
-              onChange={(e) => setBankDetails({ ...bankDetails, bank_name: e.target.value })}
-              placeholder="e.g. OPay Digital Service Limited"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="account_name">Account Name</Label>
-            <Input
-              id="account_name"
-              value={bankDetails.account_name}
-              onChange={(e) => setBankDetails({ ...bankDetails, account_name: e.target.value })}
-              placeholder="e.g. JOHN DOE"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bank_name">Bank Name / Header</Label>
+              <Input
+                id="bank_name"
+                value={bankDetails.bank_name}
+                onChange={(e) => setBankDetails({ ...bankDetails, bank_name: e.target.value })}
+                placeholder="e.g. SWISS PRIVATE BANK"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="routing_number">Routing Number</Label>
-            <Input
-              id="routing_number"
-              value={bankDetails.routing_number}
-              onChange={(e) => setBankDetails({ ...bankDetails, routing_number: e.target.value })}
-              placeholder="e.g. 123456789"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="account_holder">Account Holder</Label>
+              <Input
+                id="account_holder"
+                value={bankDetails.account_holder}
+                onChange={(e) => setBankDetails({ ...bankDetails, account_holder: e.target.value })}
+                placeholder="e.g. Daniel Mercer"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="account_number">Account No.</Label>
+              <Input
+                id="account_number"
+                value={bankDetails.account_number}
+                onChange={(e) => setBankDetails({ ...bankDetails, account_number: e.target.value })}
+                placeholder="e.g. 4587-XXXX-XX"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="iban">IBAN</Label>
+              <Input
+                id="iban"
+                value={bankDetails.iban}
+                onChange={(e) => setBankDetails({ ...bankDetails, iban: e.target.value })}
+                placeholder="e.g. CHXX XXXX XXXX XXXX XXXX X"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="swift_bic">SWIFT / BIC</Label>
+              <Input
+                id="swift_bic"
+                value={bankDetails.swift_bic}
+                onChange={(e) => setBankDetails({ ...bankDetails, swift_bic: e.target.value })}
+                placeholder="e.g. XXXXXXXX"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Input
+                id="currency"
+                value={bankDetails.currency}
+                onChange={(e) => setBankDetails({ ...bankDetails, currency: e.target.value })}
+                placeholder="e.g. CHF / USD"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="client_number">Client No.</Label>
+              <Input
+                id="client_number"
+                value={bankDetails.client_number}
+                onChange={(e) => setBankDetails({ ...bankDetails, client_number: e.target.value })}
+                placeholder="e.g. C-XXXXXX"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="account_type">Account Type</Label>
+              <Input
+                id="account_type"
+                value={bankDetails.account_type}
+                onChange={(e) => setBankDetails({ ...bankDetails, account_type: e.target.value })}
+                placeholder="e.g. Private Current Account"
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="bank_address">Bank Address</Label>
+              <Input
+                id="bank_address"
+                value={bankDetails.bank_address}
+                onChange={(e) => setBankDetails({ ...bankDetails, bank_address: e.target.value })}
+                placeholder="e.g. Zurich, Switzerland"
+              />
+            </div>
           </div>
 
           <Button 

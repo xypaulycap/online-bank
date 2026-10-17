@@ -60,7 +60,17 @@ export default function AdminUsersPage() {
   const [currencyForm, setCurrencyForm] = useState({ currency: "USD" });
   const [editForm, setEditForm] = useState({ first_name: "", last_name: "", username: "", is_admin: false, currency: "USD" });
   const [isBankDetailsDialogOpen, setIsBankDetailsDialogOpen] = useState(false);
-  const [bankDetailsForm, setBankDetailsForm] = useState({ account_number: "", bank_name: "", account_name: "", routing_number: "" });
+  const [bankDetailsForm, setBankDetailsForm] = useState({
+    bank_name: "SWISS PRIVATE BANK",
+    account_holder: "",
+    account_number: "",
+    iban: "",
+    swift_bic: "",
+    currency: "CHF / USD",
+    client_number: "",
+    bank_address: "Zurich, Switzerland",
+    account_type: "Private Current Account",
+  });
   const { toast } = useToast();
 
   const currencies = [
@@ -282,17 +292,35 @@ export default function AdminUsersPage() {
 
   const handleOpenBankDetails = (user: User) => {
     setSelectedUser(user);
-    setBankDetailsForm(user.admin_bank_details || { account_number: "", bank_name: "", account_name: "", routing_number: "" });
+    const d = user.admin_bank_details || {};
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
+    const clientNo = `C-${(user.id || "").replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+    setBankDetailsForm({
+      bank_name: d.bank_name || "SWISS PRIVATE BANK",
+      account_holder: d.account_holder || d.account_name || fullName || "",
+      account_number: d.account_number || "",
+      iban: d.iban || "",
+      swift_bic: d.swift_bic || d.routing_number || "",
+      currency: d.currency || user.currency || "CHF / USD",
+      client_number: d.client_number || clientNo,
+      bank_address: d.bank_address || "Zurich, Switzerland",
+      account_type: d.account_type || "Private Current Account",
+    });
     setIsBankDetailsDialogOpen(true);
   };
 
   const handleSaveBankDetails = async () => {
     if (!selectedUser) return;
     try {
-      await adminUserService.updateUserBankDetails(selectedUser.id, bankDetailsForm);
+      const payload = {
+        ...bankDetailsForm,
+        account_name: bankDetailsForm.account_holder,
+        routing_number: bankDetailsForm.swift_bic,
+      };
+      await adminUserService.updateUserBankDetails(selectedUser.id, payload);
       toast({
         title: "Success",
-        description: "User bank details updated successfully",
+        description: `Client deposit details for ${selectedUser.first_name} ${selectedUser.last_name} updated successfully`,
       });
       setIsBankDetailsDialogOpen(false);
       fetchUsers();
@@ -418,10 +446,11 @@ export default function AdminUsersPage() {
                         {user.can_transfer === false ? "🔒" : "🔓"}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant={user.admin_bank_details && (user.admin_bank_details.account_number || user.admin_bank_details.iban) ? "default" : "outline"}
                         size="sm"
                         onClick={() => handleOpenBankDetails(user)}
-                        title="Set Bank Details"
+                        title={user.admin_bank_details && (user.admin_bank_details.account_number || user.admin_bank_details.iban) ? "Edit Custom Bank Details (Configured)" : "Set Custom Bank Details"}
+                        className={user.admin_bank_details && (user.admin_bank_details.account_number || user.admin_bank_details.iban) ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}
                       >
                         🏦
                       </Button>
@@ -617,60 +646,123 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <Dialog open={isBankDetailsDialogOpen} onOpenChange={setIsBankDetailsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Set Bank Details</DialogTitle>
+            <DialogTitle>Set Client Deposit Account Details</DialogTitle>
             <DialogDescription>
-              Set unique bank deposit details for {selectedUser?.first_name} {selectedUser?.last_name}. These will override the global settings.
+              Configure unique deposit account details for <strong>{selectedUser?.first_name} {selectedUser?.last_name}</strong>. These fields will be displayed directly on their Deposit page.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-3">
             <div>
-              <Label>Bank Name</Label>
+              <Label className="text-xs font-semibold">Bank Name / Header</Label>
               <Input
+                className="mt-1"
                 value={bankDetailsForm.bank_name}
                 onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, bank_name: e.target.value })}
-                placeholder="e.g. Chase Bank"
+                placeholder="e.g. SWISS PRIVATE BANK"
               />
             </div>
             <div>
-              <Label>Account Name</Label>
+              <Label className="text-xs font-semibold">Account Holder</Label>
               <Input
-                value={bankDetailsForm.account_name}
-                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_name: e.target.value })}
-                placeholder="e.g. John Doe"
+                className="mt-1"
+                value={bankDetailsForm.account_holder}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_holder: e.target.value })}
+                placeholder="e.g. Daniel Mercer"
               />
             </div>
             <div>
-              <Label>Account Number</Label>
+              <Label className="text-xs font-semibold">Account No.</Label>
               <Input
+                className="mt-1"
                 value={bankDetailsForm.account_number}
                 onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_number: e.target.value })}
-                placeholder="e.g. 1234567890"
+                placeholder="e.g. 4587-XXXX-XX"
               />
             </div>
             <div>
-              <Label>Routing Number</Label>
+              <Label className="text-xs font-semibold">IBAN</Label>
               <Input
-                value={bankDetailsForm.routing_number}
-                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, routing_number: e.target.value })}
-                placeholder="e.g. 098765432"
+                className="mt-1"
+                value={bankDetailsForm.iban}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, iban: e.target.value })}
+                placeholder="e.g. CHXX XXXX XXXX XXXX XXXX X"
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveBankDetails} className="flex-1">
-                Save Details
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setBankDetailsForm({ account_number: "", bank_name: "", account_name: "", routing_number: "" });
-                }}
-                title="Clear the form. Click Save after to delete the custom details."
-              >
-                Clear
-              </Button>
+            <div>
+              <Label className="text-xs font-semibold">SWIFT / BIC</Label>
+              <Input
+                className="mt-1"
+                value={bankDetailsForm.swift_bic}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, swift_bic: e.target.value })}
+                placeholder="e.g. XXXXXXXX"
+              />
             </div>
+            <div>
+              <Label className="text-xs font-semibold">Currency</Label>
+              <Input
+                className="mt-1"
+                value={bankDetailsForm.currency}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, currency: e.target.value })}
+                placeholder="e.g. CHF / USD"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Client No.</Label>
+              <Input
+                className="mt-1"
+                value={bankDetailsForm.client_number}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, client_number: e.target.value })}
+                placeholder="e.g. C-XXXXXX"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Account Type</Label>
+              <Input
+                className="mt-1"
+                value={bankDetailsForm.account_type}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, account_type: e.target.value })}
+                placeholder="e.g. Private Current Account"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label className="text-xs font-semibold">Bank Address</Label>
+              <Input
+                className="mt-1"
+                value={bankDetailsForm.bank_address}
+                onChange={(e) => setBankDetailsForm({ ...bankDetailsForm, bank_address: e.target.value })}
+                placeholder="e.g. Zurich, Switzerland"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-3 border-t">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setBankDetailsForm({
+                  bank_name: "",
+                  account_holder: "",
+                  account_number: "",
+                  iban: "",
+                  swift_bic: "",
+                  currency: "",
+                  client_number: "",
+                  bank_address: "",
+                  account_type: "",
+                });
+              }}
+              title="Clear all fields"
+            >
+              Clear
+            </Button>
+            <Button variant="outline" type="button" onClick={() => setIsBankDetailsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBankDetails} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              Save Details
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/components/ui/use-toast";
 import { cryptoWalletService, accountService, depositRequestService, publicSettingsService } from "@/lib/supabase-services";
 import { supabase } from "@/lib/supabase";
-import { Copy, Check, Wallet, AlertCircle, Send, User, Landmark, Hash, Share2 } from "lucide-react";
+import { Copy, Check, Wallet, AlertCircle, Send, User, Landmark, Hash, Share2, Building, FileText, BadgeCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,10 +50,15 @@ export default function DepositPage() {
   const [wallets, setWallets] = useState<CryptoWallet[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [adminBankDetails, setAdminBankDetails] = useState({
+    bank_name: "SWISS PRIVATE BANK",
+    account_holder: "Loading...",
     account_number: "Loading...",
-    bank_name: "Loading...",
-    account_name: "Loading...",
-    routing_number: "Loading...",
+    iban: "Loading...",
+    swift_bic: "Loading...",
+    currency: "CHF / USD",
+    client_number: "Loading...",
+    bank_address: "Zurich, Switzerland",
+    account_type: "Private Current Account",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,36 +108,43 @@ export default function DepositPage() {
         // Fetch user profile first for user-specific bank details and name
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('first_name, last_name, admin_bank_details')
+          .select('id, first_name, last_name, currency, admin_bank_details')
           .eq('id', session.user.id)
           .single();
           
         let details = profile?.admin_bank_details;
         
-        // Check if details is an empty object or has empty fields, fallback if needed
-        if (!details || (!details.account_number && !details.bank_name)) {
+        // Check if details has custom configuration, fallback if needed
+        if (!details || (!details.account_number && !details.iban && !details.bank_name)) {
           details = await publicSettingsService.getSetting('bank_details');
         }
 
         const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
+        const clientNo = `C-${(profile?.id || session.user.id || "").replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
         if (details) {
           setAdminBankDetails({
-            account_number: details.account_number || "N/A",
-            bank_name: details.bank_name || "Valtier Financial Group",
-            account_name: details.account_name && details.account_name !== "USER" && details.account_name !== "Loading..."
-              ? details.account_name 
-              : (fullName || details.account_name || "N/A"),
-            routing_number: details.routing_number && details.routing_number !== "NA" 
-              ? details.routing_number 
-              : "SWISSXXXXXXXX",
+            bank_name: details.bank_name || "SWISS PRIVATE BANK",
+            account_holder: details.account_holder || (details.account_name && details.account_name !== "USER" && details.account_name !== "Loading..." ? details.account_name : fullName) || "Valtier Client",
+            account_number: details.account_number || "4587-XXXX-XX",
+            iban: details.iban || "CHXX XXXX XXXX XXXX XXXX X",
+            swift_bic: details.swift_bic || (details.routing_number && details.routing_number !== "NA" ? details.routing_number : "XXXXXXXX"),
+            currency: details.currency || (profile?.currency ? `${profile.currency} / CHF` : "CHF / USD"),
+            client_number: details.client_number || clientNo,
+            bank_address: details.bank_address || "Zurich, Switzerland",
+            account_type: details.account_type || "Private Current Account",
           });
         } else {
           setAdminBankDetails({
-            account_number: "704 337 5669",
-            bank_name: "Valtier Financial Group",
-            account_name: fullName || "Valtier Client",
-            routing_number: "SWISSXXXXXXXX",
+            bank_name: "SWISS PRIVATE BANK",
+            account_holder: fullName || "Valtier Client",
+            account_number: "4587-XXXX-XX",
+            iban: "CHXX XXXX XXXX XXXX XXXX X",
+            swift_bic: "XXXXXXXX",
+            currency: profile?.currency ? `${profile.currency} / CHF` : "CHF / USD",
+            client_number: clientNo,
+            bank_address: "Zurich, Switzerland",
+            account_type: "Private Current Account",
           });
         }
       } catch (settingsErr) {
@@ -278,65 +290,195 @@ export default function DepositPage() {
   return (
     <div className="container mx-auto py-8 max-w-2xl space-y-6">
       {/* Admin Bank Details Card */}
-      <Card className="border-0 shadow-md rounded-3xl overflow-hidden bg-white dark:bg-gray-800">
+      <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-white dark:bg-gray-800">
         <CardContent className="p-6 sm:p-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="h-12 w-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-lg">
-              123
-            </div>
+          <div className="flex items-start justify-between pb-5 border-b border-gray-100 dark:border-gray-700/80">
             <div>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Account Number</p>
-              <p className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">{adminBankDetails.account_number}</p>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#00b47d]">
+                Official Client Account Details
+              </span>
+              <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white mt-0.5 tracking-tight uppercase">
+                {adminBankDetails.bank_name} — CLIENT ACCOUNT DETAILS
+              </h2>
             </div>
-          </div>
-          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="h-12 w-12 bg-[#e6f7f2] dark:bg-[#00b47d]/20 rounded-2xl flex items-center justify-center text-[#00b47d]">
+            <div className="h-11 w-11 rounded-2xl bg-[#e6f7f2] dark:bg-[#00b47d]/20 flex items-center justify-center text-[#00b47d] shrink-0">
               <Landmark className="h-6 w-6" />
             </div>
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Bank</p>
-              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.bank_name}</p>
+          </div>
+
+          <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700 my-2">
+            {/* Account Holder */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Account Holder</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.account_holder}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-[#00b47d] hover:bg-[#e6f7f2] dark:hover:bg-[#00b47d]/20 rounded-lg"
+                onClick={() => handleCopyAddress(adminBankDetails.account_holder, 101)}
+                title="Copy Account Holder"
+              >
+                {copiedId === 101 ? <Check className="h-4 w-4 text-[#00b47d]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* Account No. */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 shrink-0">
+                  <Hash className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Account No.</p>
+                  <p className="text-base sm:text-xl font-bold tracking-tight text-gray-900 dark:text-white">{adminBankDetails.account_number}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-[#00b47d] hover:bg-[#e6f7f2] dark:hover:bg-[#00b47d]/20 rounded-lg"
+                onClick={() => handleCopyAddress(adminBankDetails.account_number, 102)}
+                title="Copy Account Number"
+              >
+                {copiedId === 102 ? <Check className="h-4 w-4 text-[#00b47d]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* IBAN */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#e6f7f2] dark:bg-[#00b47d]/20 flex items-center justify-center text-[#00b47d] font-bold text-xs shrink-0">
+                  IBAN
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">IBAN</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white font-mono break-all">{adminBankDetails.iban}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-[#00b47d] hover:bg-[#e6f7f2] dark:hover:bg-[#00b47d]/20 rounded-lg"
+                onClick={() => handleCopyAddress(adminBankDetails.iban, 103)}
+                title="Copy IBAN"
+              >
+                {copiedId === 103 ? <Check className="h-4 w-4 text-[#00b47d]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* SWIFT / BIC */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#e6f7f2] dark:bg-[#00b47d]/20 flex items-center justify-center text-[#00b47d] shrink-0">
+                  <Landmark className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">SWIFT / BIC</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white font-mono">{adminBankDetails.swift_bic}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-[#00b47d] hover:bg-[#e6f7f2] dark:hover:bg-[#00b47d]/20 rounded-lg"
+                onClick={() => handleCopyAddress(adminBankDetails.swift_bic, 104)}
+                title="Copy SWIFT/BIC"
+              >
+                {copiedId === 104 ? <Check className="h-4 w-4 text-[#00b47d]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* Currency */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 font-bold text-xs shrink-0">
+                  CHF
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Currency</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.currency}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Client No. */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Client No.</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white font-mono">{adminBankDetails.client_number}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-[#00b47d] hover:bg-[#e6f7f2] dark:hover:bg-[#00b47d]/20 rounded-lg"
+                onClick={() => handleCopyAddress(adminBankDetails.client_number, 105)}
+                title="Copy Client Number"
+              >
+                {copiedId === 105 ? <Check className="h-4 w-4 text-[#00b47d]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* Bank Address */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0">
+                  <Building className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Bank Address</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.bank_address}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Account Type */}
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0">
+                  <BadgeCheck className="h-5 w-5 text-[#00b47d]" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Account Type</p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.account_type}</p>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="h-12 w-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-gray-600 dark:text-gray-400">
-              <User className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Name</p>
-              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.account_name}</p>
-            </div>
-          </div>
-          <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-5"></div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-12 w-12 bg-[#e6f7f2] dark:bg-[#00b47d]/20 rounded-2xl flex items-center justify-center text-[#00b47d]">
-              <Hash className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium mb-0.5">Bank Swift Code</p>
-              <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">{adminBankDetails.routing_number}</p>
-            </div>
-          </div>
-          <div className="flex gap-3 sm:gap-4">
+
+          <div className="flex gap-3 sm:gap-4 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700/80">
             <Button 
               variant="secondary" 
               className="flex-1 bg-[#e6f7f2] text-[#00b47d] hover:bg-[#d1f0e6] dark:bg-[#00b47d]/10 dark:text-[#00b47d] dark:hover:bg-[#00b47d]/20 rounded-full h-12 sm:h-14 font-semibold text-sm sm:text-base border-0 shadow-none"
-              onClick={() => handleCopyAddress(adminBankDetails.account_number, -1)}
+              onClick={() => {
+                const fullText = `${adminBankDetails.bank_name} — CLIENT ACCOUNT DETAILS\nAccount Holder: ${adminBankDetails.account_holder}\nAccount No.: ${adminBankDetails.account_number}\nIBAN: ${adminBankDetails.iban}\nSWIFT/BIC: ${adminBankDetails.swift_bic}\nCurrency: ${adminBankDetails.currency}\nClient No.: ${adminBankDetails.client_number}\nBank Address: ${adminBankDetails.bank_address}\nAccount Type: ${adminBankDetails.account_type}`;
+                handleCopyAddress(fullText, -1);
+              }}
             >
-              {copiedId === -1 ? "Copied!" : "Copy Number"}
+              {copiedId === -1 ? "All Details Copied!" : "Copy Details"}
             </Button>
             <Button 
               className="flex-1 bg-[#00c288] hover:bg-[#00a876] text-white rounded-full h-12 sm:h-14 font-semibold text-sm sm:text-base border-0 shadow-none"
               onClick={() => {
+                const fullText = `${adminBankDetails.bank_name} — CLIENT ACCOUNT DETAILS\nAccount Holder: ${adminBankDetails.account_holder}\nAccount No.: ${adminBankDetails.account_number}\nIBAN: ${adminBankDetails.iban}\nSWIFT/BIC: ${adminBankDetails.swift_bic}\nCurrency: ${adminBankDetails.currency}\nClient No.: ${adminBankDetails.client_number}\nBank Address: ${adminBankDetails.bank_address}\nAccount Type: ${adminBankDetails.account_type}`;
                 if (navigator.share) {
                   navigator.share({
-                    title: 'Bank Details',
-                    text: `Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}\nRouting Number: ${adminBankDetails.routing_number}`,
+                    title: `${adminBankDetails.bank_name} Client Account Details`,
+                    text: fullText,
                   });
                 } else {
-                  handleCopyAddress(`Bank: ${adminBankDetails.bank_name}\nAccount: ${adminBankDetails.account_number}\nName: ${adminBankDetails.account_name}\nRouting Number: ${adminBankDetails.routing_number}`, -2);
+                  handleCopyAddress(fullText, -2);
                 }
               }}
             >
@@ -353,7 +495,7 @@ export default function DepositPage() {
           <ol className="space-y-5 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             <li className="flex gap-3">
               <span className="font-bold text-[#00b47d]">1.</span>
-              <span className="leading-relaxed">Copy the account details above-{adminBankDetails.account_number} is your Account Number</span>
+              <span className="leading-relaxed">Copy the account details above—Account No. {adminBankDetails.account_number} or IBAN {adminBankDetails.iban}</span>
             </li>
             <li className="flex gap-3">
               <span className="font-bold text-[#00b47d]">2.</span>
