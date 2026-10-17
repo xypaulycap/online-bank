@@ -168,7 +168,7 @@ export function CredixNavbar() {
             {/* Desktop Action Buttons */}
             <div className="hidden lg:flex items-center space-x-3">
               {/* Google Translate */}
-              <GoogleTranslate id="google_translate_desktop" />
+              <GoogleTranslate id="google_translate_desktop" className="hidden lg:inline-flex" />
 
               {/* Dark Mode Toggle */}
               <button
@@ -331,7 +331,11 @@ export function CredixNavbar() {
               </Link>
 
               {/* Google Translate for Mobile */}
-              <div className="pt-2">
+              <div className="pt-2 px-4 py-2.5 flex items-center justify-between rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border border-primary-200/50 dark:border-primary-700/30">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                  <i className="fa-solid fa-globe mr-3 text-primary-500"></i>
+                  Language
+                </span>
                 <GoogleTranslate id="google_translate_mobile" />
               </div>
 
