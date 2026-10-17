@@ -231,10 +231,16 @@ export function UserSidebar() {
             </div>
           </div>
         </div>
-        <div className="mb-3 flex items-center justify-between">
+        <label
+          htmlFor={mobile ? "google_translate_user_mobile_select" : "google_translate_user_desktop_select"}
+          className="mb-3 flex items-center justify-between cursor-pointer"
+        >
           <span className="text-xs text-gray-500 dark:text-gray-400">Language</span>
-          <GoogleTranslate id={mobile ? "google_translate_user_mobile" : "google_translate_user_desktop"} />
-        </div>
+          <GoogleTranslate
+            id={mobile ? "google_translate_user_mobile" : "google_translate_user_desktop"}
+            selectId={mobile ? "google_translate_user_mobile_select" : "google_translate_user_desktop_select"}
+          />
+        </label>
         <Button
           variant="outline"
           className="w-full"

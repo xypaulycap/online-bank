@@ -146,13 +146,16 @@ export function Navigation({ children }: NavigationProps) {
                   </div>
 
                   <div className="pt-6 border-t border-border space-y-4">
-                    <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2.5">
+                    <label
+                      htmlFor="google_translate_nav_mobile_select"
+                      className="flex items-center justify-between rounded-lg bg-muted/50 p-2.5 cursor-pointer"
+                    >
                       <span className="text-xs font-medium text-muted-foreground flex items-center">
                         <Globe className="h-4 w-4 mr-2" />
                         Language
                       </span>
-                      <GoogleTranslate id="google_translate_nav_mobile" />
-                    </div>
+                      <GoogleTranslate id="google_translate_nav_mobile" selectId="google_translate_nav_mobile_select" />
+                    </label>
                     <Button variant="default" className="w-full" asChild onClick={() => setMobileMenuOpen(false)}>
                       <Link href="/login">Login</Link>
                     </Button>

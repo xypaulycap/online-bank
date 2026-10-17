@@ -138,10 +138,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </nav>
         <div className="mt-8 pt-8 border-t border-border">
-          <div className="mb-4 flex items-center justify-between">
+          <label
+            htmlFor="google_translate_admin_select"
+            className="mb-4 flex items-center justify-between cursor-pointer"
+          >
             <span className="text-xs text-muted-foreground">Language</span>
-            <GoogleTranslate id="google_translate_admin" />
-          </div>
+            <GoogleTranslate id="google_translate_admin" selectId="google_translate_admin_select" />
+          </label>
           <Link href="/dashboard">
             <Button variant="ghost" className="w-full justify-start mb-2">
               Back to Dashboard
