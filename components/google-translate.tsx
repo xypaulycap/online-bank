@@ -66,17 +66,37 @@ export function GoogleTranslate({
 
   useEffect(() => {
     // 1. Detect current language from cookies or localStorage
+    // const getSavedLang = () => {
+    //   try {
+    //     const match = document.cookie.match(/(?:^|;\s*)googtrans=\/en\/([^;]+)/);
+    //     if (match && match[1]) {
+    //       return match[1];
+    //     }
+    //     return localStorage.getItem("preferred_language") || "en";
+    //   } catch (_) {
+    //     return "en";
+    //   }
+    // };
     const getSavedLang = () => {
-      try {
-        const match = document.cookie.match(/(?:^|;\s*)googtrans=\/en\/([^;]+)/);
-        if (match && match[1]) {
-          return match[1];
-        }
-        return localStorage.getItem("preferred_language") || "en";
-      } catch (_) {
-        return "en";
-      }
-    };
+  try {
+    const match = document.cookie.match(
+      /(?:^|;\s*)googtrans=\/en\/([^;]+)/
+    );
+
+    const saved =
+      match?.[1] ||
+      localStorage.getItem("preferred_language") ||
+      "en";
+
+    return SUPPORTED_LANGUAGES.some(
+      (lang) => lang.code === saved
+    )
+      ? saved
+      : "en";
+  } catch {
+    return "en";
+  }
+};
     setCurrentLang(getSavedLang());
 
     // 2. Ensure the hidden background Google Translate container exists
@@ -102,6 +122,9 @@ export function GoogleTranslate({
               {
                 pageLanguage: "en",
                 autoDisplay: false,
+                includedLanguages: SUPPORTED_LANGUAGES.map(
+      (lang) => lang.code
+    ).join(","),
               },
               hiddenContainerId
             );
@@ -134,53 +157,110 @@ export function GoogleTranslate({
         const script = document.createElement("script");
         script.id = "google-translate-script";
         script.src =
-          "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+  "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
         script.async = true;
         document.body.appendChild(script);
       }
     }
   }, []);
 
-  const handleLanguageChange = (newLang: string) => {
-    setCurrentLang(newLang);
-    try {
-      localStorage.setItem("preferred_language", newLang);
-    } catch (_) {}
+  // const handleLanguageChange = (newLang: string) => {
+  //   setCurrentLang(newLang);
+  //   try {
+  //     localStorage.setItem("preferred_language", newLang);
+  //   } catch (_) {}
 
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+  //   const hostname = window.location.hostname;
+  //   const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
-    if (newLang === "en") {
-      // Clear translation cookie
-      document.cookie =
-        "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-      document.cookie = `googtrans=; path=/; domain=${hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-      if (!isLocalhost && hostname) {
-        document.cookie = `googtrans=; path=/; domain=.${hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-      }
-    } else {
-      const cookieVal = `/en/${newLang}`;
-      document.cookie = `googtrans=${cookieVal}; path=/;`;
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
-      if (!isLocalhost && hostname) {
-        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${hostname};`;
-      }
-    }
+  //   if (newLang === "en") {
+  //     // Clear translation cookie
+  //     document.cookie =
+  //       "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+  //     document.cookie = `googtrans=; path=/; domain=${hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+  //     if (!isLocalhost && hostname) {
+  //       document.cookie = `googtrans=; path=/; domain=.${hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+  //     }
+  //   } else {
+  //     const cookieVal = `/en/${newLang}`;
+  //     document.cookie = `googtrans=${cookieVal}; path=/;`;
+  //     document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
+  //     if (!isLocalhost && hostname) {
+  //       document.cookie = `googtrans=${cookieVal}; path=/; domain=.${hostname};`;
+  //     }
+  //   }
 
-    // Try setting the hidden Google Translate combo directly for instant translation
-    const selectElem = document.querySelector(
-      ".goog-te-combo"
-    ) as HTMLSelectElement | null;
-    if (selectElem) {
-      selectElem.value = newLang;
-      selectElem.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+  //   // Try setting the hidden Google Translate combo directly for instant translation
+  //   const selectElem = document.querySelector(
+  //     ".goog-te-combo"
+  //   ) as HTMLSelectElement | null;
+  //   if (selectElem) {
+  //     selectElem.value = newLang;
+  //     selectElem.dispatchEvent(new Event("change", { bubbles: true }));
+  //   }
 
-    // Reload page to guarantee full translation across all DOM elements and components
-    setTimeout(() => {
-      window.location.reload();
-    }, 150);
+  //   // Reload page to guarantee full translation across all DOM elements and components
+  //   setTimeout(() => {
+  //     window.location.reload();
+  //   }, 150);
+  // };
+
+  
+const handleLanguageChange = (newLang: string) => {
+  setCurrentLang(newLang);
+
+  try {
+    localStorage.setItem("preferred_language", newLang);
+  } catch {}
+
+  const hostname = window.location.hostname;
+  const isLocalhost =
+    hostname === "localhost" || hostname === "127.0.0.1";
+
+  // Remove old cookie variants so a stale language cannot override
+  // the user's new selection.
+  const expireCookie = (domain?: string) => {
+    const domainPart = domain ? `; domain=${domain}` : "";
+    document.cookie =
+      `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}`;
   };
+
+  expireCookie();
+
+  if (hostname) {
+    expireCookie(hostname);
+
+    if (!isLocalhost) {
+      expireCookie(`.${hostname}`);
+    }
+  }
+
+  // Google Translate uses an empty target value to return to English.
+  if (newLang !== "en") {
+    const cookieValue = `/en/${newLang}`;
+
+    document.cookie = `googtrans=${cookieValue}; path=/; SameSite=Lax`;
+
+    if (!isLocalhost && hostname) {
+      document.cookie =
+        `googtrans=${cookieValue}; path=/; domain=.${hostname}; SameSite=Lax`;
+    }
+  }
+
+  // Trigger Google Translate directly. Do not reload the page.
+  const translateSelect = document.querySelector(
+    ".goog-te-combo"
+  ) as HTMLSelectElement | null;
+
+  if (translateSelect) {
+    translateSelect.value = newLang === "en" ? "" : newLang;
+
+    translateSelect.dispatchEvent(
+      new Event("change", { bubbles: true })
+    );
+  }
+};
+
 
   const currentLangObj =
     SUPPORTED_LANGUAGES.find((l) => l.code === currentLang) ||
