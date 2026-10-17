@@ -48,6 +48,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "hi", name: "Hindi", flag: "🇮🇳" },
   { code: "pl", name: "Polish", flag: "🇵🇱" },
   { code: "vi", name: "Vietnamese", flag: "🇻🇳" },
+  { code: "th", name: "Thai", flag: "🇹🇭" },
 ] as const;
 
 interface GoogleTranslateProps {
