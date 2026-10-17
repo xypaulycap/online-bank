@@ -341,11 +341,13 @@ export default function Layout({ children, user, notifications }: LayoutProps) {
                     className="rounded-full mr-2 object-cover"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-2">
-                    <span className="font-medium">
-                      {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
-                    </span>
-                  </div>
+                  <Image
+                    src="/placeholder-user.jpg"
+                    alt="Profile Picture"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full mr-2 object-cover border border-gray-200 dark:border-gray-700"
+                  />
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

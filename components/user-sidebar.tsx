@@ -215,11 +215,13 @@ export function UserSidebar() {
                 className="rounded-full mr-3 object-cover"
               />
             ) : (
-              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 mr-3">
-                <span className="text-sm font-medium">
-                  {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
-                </span>
-              </div>
+              <Image
+                src="/placeholder-user.jpg"
+                alt="Profile Picture"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-full mr-3 object-cover border border-gray-200 dark:border-gray-700"
+              />
             )}
             <div>
               <p className="text-sm font-medium">

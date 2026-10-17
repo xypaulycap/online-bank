@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Bell,
   CreditCard,
@@ -39,6 +40,7 @@ import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, getCurrencySymbol } from "@/lib/utils";
 import { BankLogo } from "@/components/bank-logo";
+import { getProfilePictureUrl } from "@/lib/image-utils";
 
 interface User {
   id: string;
@@ -47,6 +49,7 @@ interface User {
   first_name: string;
   last_name: string;
   currency?: string;
+  profile_picture?: string | null;
 }
 
 interface Account {
@@ -253,11 +256,23 @@ export default function Dashboard() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
-                  <span className="text-sm font-medium">
-                    {user ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}` : "JD"}
-                  </span>
-                </div>
+                {user?.profile_picture ? (
+                  <Image
+                    src={getProfilePictureUrl(user.profile_picture, 40)}
+                    alt={user ? `${user.first_name} ${user.last_name}` : "User Profile"}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full object-cover border border-emerald-500/30"
+                  />
+                ) : (
+                  <Image
+                    src="/placeholder-user.jpg"
+                    alt={user ? `${user.first_name} ${user.last_name}` : "User Profile"}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                  />
+                )}
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium">{user ? `${user.first_name} ${user.last_name}` : "User"}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || "user@example.com"}</p>
