@@ -297,19 +297,21 @@ const handleLanguageChange = (newLang: string) => {
 
   if (newLang === "en") {
     // Remove the saved target-language cookie.
-    try {
-      localStorage.setItem("preferred_language", "en");
-    } catch {}
+    window.location.reload();
+  return;
+    // try {
+    //   localStorage.setItem("preferred_language", "en");
+    // } catch {}
 
-    // Select the original language in Google Translate.
-    if (translateSelect) {
-      translateSelect.value = "";
-      translateSelect.dispatchEvent(
-        new Event("change", { bubbles: true })
-      );
-    }
+    // // Select the original language in Google Translate.
+    // if (translateSelect) {
+    //   translateSelect.value = "";
+    //   translateSelect.dispatchEvent(
+    //     new Event("change", { bubbles: true })
+    //   );
+    // }
 
-    return;
+    // return;
   }
 
   // Save the selected target language.
