@@ -1348,3 +1348,60 @@ export const adminSettingsService = {
     return data
   }
 }
+
+
+// Admin Inquiry Services
+export const adminInquiryService = {
+  getAllInquiries: async (status?: string) => {
+    await requireAdmin()
+    let query = supabase
+      .from('inquiries')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data || []
+  },
+
+  getInquiryById: async (id: string) => {
+    await requireAdmin()
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  updateInquiry: async (id: string, updates: { status?: string; admin_notes?: string }) => {
+    await requireAdmin()
+    const response = await fetch('/api/inquiries', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates }),
+    })
+    const result = await response.json()
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to update inquiry')
+    }
+    return result.data
+  },
+
+  deleteInquiry: async (id: string) => {
+    await requireAdmin()
+    const { error } = await supabase
+      .from('inquiries')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+    return true
+  },
+}

@@ -1071,3 +1071,41 @@ COMMENT ON COLUMN public.transactions.verification_step IS 'Multi-step transfer 
 -- ============================================================================
 -- End of schema
 -- ============================================================================
+
+-- ============================================================================
+-- 14. Customer Inquiries / Support Table
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.inquiries (
+  id SERIAL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  name VARCHAR(150) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
+  subject VARCHAR(255) NOT NULL,
+  category VARCHAR(50) NOT NULL DEFAULT 'General Inquiry',
+  message TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  priority VARCHAR(20) NOT NULL DEFAULT 'normal',
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inquiries_user_id ON public.inquiries(user_id);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
+CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_at DESC);
+
+ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can submit inquiry" ON public.inquiries;
+CREATE POLICY "Anyone can submit inquiry" ON public.inquiries
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can view own inquiries" ON public.inquiries;
+CREATE POLICY "Users can view own inquiries" ON public.inquiries
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins can view and manage all inquiries" ON public.inquiries;
+CREATE POLICY "Admins can view and manage all inquiries" ON public.inquiries
+  FOR ALL USING (public.is_user_admin(auth.uid()));

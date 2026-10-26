@@ -17,6 +17,7 @@ import {
   Shield,
   Wallet,
   Settings,
+  HelpCircle,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -100,6 +101,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Transactions
             </Button>
           </Link>
+          <Link href="/admin/inquiries">
+            <Button variant="ghost" className="w-full justify-start">
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Customer Inquiries
+            </Button>
+          </Link>
           <Link href="/admin/notifications">
             <Button variant="ghost" className="w-full justify-start">
               <Bell className="mr-2 h-4 w-4" />
@@ -160,5 +167,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
-
-

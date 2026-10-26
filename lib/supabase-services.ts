@@ -1442,3 +1442,66 @@ export const publicSettingsService = {
     return data.setting_value
   }
 }
+
+
+// Customer Inquiry / Support Services
+export interface Inquiry {
+  id: number;
+  user_id?: string | null;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject: string;
+  category: string;
+  message: string;
+  status: 'pending' | 'in_progress' | 'resolved' | 'closed';
+  priority?: 'normal' | 'urgent';
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export const inquiryService = {
+  createInquiry: async (inquiryData: {
+    user_id?: string | null;
+    name: string;
+    email: string;
+    phone?: string | null;
+    subject: string;
+    category?: string;
+    message: string;
+    priority?: 'normal' | 'urgent';
+  }): Promise<any> => {
+    const response = await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inquiryData),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to submit inquiry');
+    }
+    return result.data;
+  },
+
+  getUserInquiries: async (userId?: string): Promise<Inquiry[]> => {
+    try {
+      let targetUserId = userId;
+      if (!targetUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        targetUserId = user?.id;
+      }
+      if (!targetUserId) return [];
+
+      const response = await fetch(`/api/inquiries?userId=${encodeURIComponent(targetUserId)}`);
+      const result = await response.json();
+      if (!response.ok) {
+        return [];
+      }
+      return result.data || [];
+    } catch (err) {
+      console.warn('Could not fetch user inquiries:', err);
+      return [];
+    }
+  },
+};

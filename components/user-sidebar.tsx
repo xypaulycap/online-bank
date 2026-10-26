@@ -22,6 +22,7 @@ import {
   Lock,
   Clock,
   Wallet,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -125,6 +126,7 @@ export function UserSidebar() {
     { href: "/pending-transactions", label: "Pending", icon: Clock },
     { href: "/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
     { href: "/profile", label: "Profile", icon: User },
+    { href: "/support", label: "Help Center", icon: HelpCircle },
   ];
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
@@ -281,4 +283,3 @@ export function UserSidebar() {
     </>
   );
 }
-
