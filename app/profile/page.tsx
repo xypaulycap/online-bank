@@ -424,7 +424,7 @@ function ProfileContent() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="max-w-5xl mx-auto space-y-6 pb-12 pt-14 md:pt-0">
       {/* Header Profile Summary Card */}
       <Card className="border shadow-sm overflow-hidden">
         <div className="h-28 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 relative"></div>
@@ -478,18 +478,20 @@ function ProfileContent() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-3 max-w-md w-full bg-muted/60 p-1">
-          <TabsTrigger value="profile" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <User className="h-4 w-4" />
-            Profile Details
+        <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1">
+          <TabsTrigger value="profile" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
+            <User className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Profile Details</span>
+            <span className="sm:hidden">Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Shield className="h-4 w-4" />
-            Security & Password
+          <TabsTrigger value="security" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
+            <Shield className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Security &amp; Password</span>
+            <span className="sm:hidden">Security</span>
           </TabsTrigger>
-          <TabsTrigger value="accounts" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <CreditCard className="h-4 w-4" />
-            Accounts
+          <TabsTrigger value="accounts" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
+            <CreditCard className="h-4 w-4 flex-shrink-0" />
+            <span>Accounts</span>
           </TabsTrigger>
         </TabsList>
 

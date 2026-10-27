@@ -41,7 +41,15 @@ export function Navigation({ children }: NavigationProps) {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   // Marketing/landing pages that use their own navigation
   const marketingPages = ["/", "/about", "/services", "/contact", "/chart", "/alerts", "/send-money", "/grants"];
-  const isMarketingPage = pathname && marketingPages.includes(pathname);
+  // Authenticated app pages that use UserSidebar — skip the Navigation wrapper for all of them
+  const authenticatedPrefixes = [
+    "/dashboard", "/profile", "/settings", "/accounts", "/transfers",
+    "/wire-transfer", "/transaction-history", "/pending-transactions",
+    "/notifications", "/cards", "/kyc", "/deposit", "/support",
+    "/help", "/statement", "/transfer-success", "/send-money",
+  ];
+  const isAuthenticatedPage = pathname ? authenticatedPrefixes.some((p) => pathname.startsWith(p)) : false;
+  const isMarketingPage = (pathname && marketingPages.includes(pathname)) || isAuthenticatedPage;
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
