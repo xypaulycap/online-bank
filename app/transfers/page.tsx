@@ -217,7 +217,7 @@ export default function Transactions() {
         toast({ title: "Success", description: "Internal transfer completed successfully" });
       }
       setIsOtpDialogOpen(false);
-      router.push("/dashboard");
+      router.push("/transfer-success");
     } catch (err: any) {
       if (err.message === 'TRANSFER_DISABLED') {
         setIsOtpDialogOpen(false);
@@ -295,7 +295,7 @@ export default function Transactions() {
         setPinStep(1);
         setPendingTransactionId(null);
         setIsPinDialogOpen(false);
-        router.push("/dashboard");
+        router.push("/transfer-success");
       } catch (err: any) {
         if (err.message === 'TRANSFER_DISABLED') {
           setIsPinDialogOpen(false);
@@ -341,7 +341,7 @@ export default function Transactions() {
         setPinStep(1);
         setPendingTransactionId(null);
         setIsPinDialogOpen(false);
-        router.push("/dashboard");
+        router.push("/transfer-success");
       } catch (err: any) {
         if (err.message === 'TRANSFER_DISABLED') {
           setIsPinDialogOpen(false);

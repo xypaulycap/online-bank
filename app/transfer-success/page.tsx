@@ -28,14 +28,14 @@ export default function TransferSuccessPage() {
 
   return (
     <div className="container mx-auto py-20 max-w-md">
-      <Card className="text-center border-green-200 shadow-lg">
+      <Card className="text-center border-blue-200 shadow-lg">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <CheckCircle2 className="h-20 w-20 text-green-500 animate-in zoom-in duration-300" />
+            <CheckCircle2 className="h-20 w-20 text-blue-500 animate-in zoom-in duration-300" />
           </div>
-          <CardTitle className="text-2xl text-green-700">Transfer Successful!</CardTitle>
+          <CardTitle className="text-2xl text-blue-700">Transfer Being Processed</CardTitle>
           <CardDescription>
-            Your transaction has been processed successfully.
+            Your transaction has been received and is currently being processed.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -44,7 +44,7 @@ export default function TransferSuccessPage() {
           </p>
           <div className="flex flex-col gap-3">
             <Button 
-              className="w-full bg-green-600 hover:bg-green-700" 
+              className="w-full bg-blue-600 hover:bg-blue-700" 
               onClick={() => router.push("/dashboard")}
             >
               Go to Dashboard Now
