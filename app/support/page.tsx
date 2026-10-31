@@ -223,7 +223,7 @@ export default function SupportPage() {
               <h3 className="font-semibold text-foreground">Phone Banking</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Available 24/7 worldwide</p>
               <div className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 space-y-0.5">
-                <div>+1 (437) 374-6082</div>
+                <div>+1 (656) 587-7247</div>
                 <div>+44 7882 752978</div>
               </div>
             </div>

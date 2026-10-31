@@ -172,7 +172,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">Phone Support</h3>
                     <div className="text-gray-600 dark:text-gray-300 text-sm mt-1 space-y-0.5">
-                      <div>North America: <a href="tel:+14373746082" className="text-emerald-600 hover:underline font-medium">+1 (437) 374-6082</a></div>
+                      <div>North America: <a href="tel:+16565877247" className="text-emerald-600 hover:underline font-medium">+1 (656) 587-7247</a></div>
                       <div>Europe / UK: <a href="tel:+447882752978" className="text-emerald-600 hover:underline font-medium">+44 7882 752978</a></div>
                     </div>
                   </div>
