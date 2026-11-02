@@ -9,7 +9,7 @@ import { CheckCircle2 } from "lucide-react";
 export default function TransferSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(15);
 
   useEffect(() => {
     const timer = setInterval(() => {

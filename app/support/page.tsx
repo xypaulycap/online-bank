@@ -242,8 +242,8 @@ export default function SupportPage() {
                 <a href="mailto:info@valtierfingroup.com" className="hover:underline block">
                   info@valtierfingroup.com
                 </a>
-                <a href="mailto:support@atlanticgates.live" className="hover:underline block text-xs">
-                  support@atlanticgates.live
+                <a href="mailto:customerservice@valtierfingroup.com" className="hover:underline block text-xs">
+                  customerservice@valtierfingroup.com
                 </a>
               </div>
             </div>
