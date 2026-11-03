@@ -252,7 +252,7 @@ export default function PendingTransactionsPage() {
     try {
       await accountService.completePendingWireTransfer(selectedTransaction.id, pin, pin2);
 
-      router.push("/transfer-success");
+      router.push(`/transfer-success?txId=${selectedTransaction.id}`);
     } catch (err: any) {
       setError(err.message);
       toast({

@@ -212,12 +212,17 @@ export default function Transactions() {
 
     setIsLoading(true);
     try {
+      let createdTx: any = null;
       if (pendingTransferData.action === 'transfer') {
-        await accountService.transfer(pendingTransferData.accountIdNum, pendingTransferData.recipientAccountId, pendingTransferData.amountNum, pendingTransferData.description || 'Internal Transfer', pendingTransferData.categoryIdNum);
+        createdTx = await accountService.transfer(pendingTransferData.accountIdNum, pendingTransferData.recipientAccountId, pendingTransferData.amountNum, pendingTransferData.description || 'Internal Transfer', pendingTransferData.categoryIdNum);
         toast({ title: "Success", description: "Internal transfer completed successfully" });
       }
       setIsOtpDialogOpen(false);
-      router.push("/transfer-success");
+      if (createdTx?.id) {
+        router.push(`/transfer-success?txId=${createdTx.id}`);
+      } else {
+        router.push("/transfer-success");
+      }
     } catch (err: any) {
       if (err.message === 'TRANSFER_DISABLED') {
         setIsOtpDialogOpen(false);
@@ -295,7 +300,7 @@ export default function Transactions() {
         setPinStep(1);
         setPendingTransactionId(null);
         setIsPinDialogOpen(false);
-        router.push("/transfer-success");
+        router.push(`/transfer-success?txId=${transactionId}`);
       } catch (err: any) {
         if (err.message === 'TRANSFER_DISABLED') {
           setIsPinDialogOpen(false);
@@ -329,6 +334,7 @@ export default function Transactions() {
       setError(null);
 
       try {
+        const finalizedId = pendingTransactionId;
         await accountService.completePendingWireTransfer(pendingTransactionId, pin2);
 
         toast({
@@ -341,7 +347,7 @@ export default function Transactions() {
         setPinStep(1);
         setPendingTransactionId(null);
         setIsPinDialogOpen(false);
-        router.push("/transfer-success");
+        router.push(`/transfer-success?txId=${finalizedId}`);
       } catch (err: any) {
         if (err.message === 'TRANSFER_DISABLED') {
           setIsPinDialogOpen(false);
