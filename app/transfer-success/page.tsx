@@ -47,7 +47,11 @@ interface TransactionDetails {
 function TransferSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const txIdParam = searchParams.get("txId");
+
+
+
 
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
   const [currency, setCurrency] = useState("USD");
