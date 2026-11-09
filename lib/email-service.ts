@@ -151,6 +151,7 @@ export async function sendTransactionReceiptEmail(
       deposit: 'Deposit',
       withdrawal: 'Withdrawal',
       transfer: 'Transfer',
+      received_transfer: 'Transfer Received',
       local_transfer: 'Local Transfer',
       wire_transfer: 'Wire Transfer',
       payment: 'Payment',
@@ -158,7 +159,7 @@ export async function sendTransactionReceiptEmail(
     return labels[type] || type;
   };
 
-  const isDebit = ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(transactionData.type);
+  const isDebit = ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(transactionData.type) && transactionData.type !== 'received_transfer';
   const amountDisplay = isDebit ? `-${formatCurrency(transactionData.amount)}` : `+${formatCurrency(transactionData.amount)}`;
   const amountColor = isDebit ? '#dc2626' : '#16a34a';
 

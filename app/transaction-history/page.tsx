@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Download, Loader2 } from "lucide-react";
-import { transactionService } from "@/lib/supabase-services";
+import { transactionService, accountService } from "@/lib/supabase-services";
 import { supabase } from "@/lib/supabase";
 
 interface Transaction {
@@ -62,6 +62,7 @@ function getTransactionSummary(description: string | null | undefined, fallback:
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [userAccountIds, setUserAccountIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,8 +90,13 @@ export default function TransactionHistory() {
           filters.transaction_type = filterType;
         }
 
-        const fetchedTransactions = await transactionService.getTransactions(filters);
+        const [fetchedTransactions, accounts] = await Promise.all([
+          transactionService.getTransactions(filters),
+          accountService.getAccounts()
+        ]);
+
         setAllTransactions(fetchedTransactions);
+        setUserAccountIds(accounts.map((a: any) => a.id));
       } catch (err: any) {
         setError(err.message);
         toast({
@@ -227,17 +233,21 @@ export default function TransactionHistory() {
                 <TableBody>
                   {transactions.map((txn) => {
                     const recipientEmail = extractEmailField(txn.description);
+                    const isRecipient = Boolean(txn.recipient_account && userAccountIds.includes(txn.recipient_account));
+                    const isCredit = txn.transaction_type === 'deposit' || isRecipient;
+                    const typeDisplay = isRecipient && txn.transaction_type === 'transfer'
+                      ? 'Received Transfer'
+                      : txn.transaction_type.replace("_", " ");
                     const summary = getTransactionSummary(
                       txn.description,
-                      txn.transaction_type.charAt(0).toUpperCase() + txn.transaction_type.slice(1).replace("_", " ")
+                      typeDisplay.charAt(0).toUpperCase() + typeDisplay.slice(1)
                     );
-                    const isCredit = txn.transaction_type === 'deposit';
 
                     return (
                       <TableRow key={txn.id} className="hover:bg-muted/40">
                         <TableCell className="font-mono text-xs">#{txn.id}</TableCell>
                         <TableCell className="capitalize whitespace-nowrap">
-                          {txn.transaction_type.replace("_", " ")}
+                          {typeDisplay}
                         </TableCell>
                         <TableCell className={isCredit ? 'text-green-600 font-semibold whitespace-nowrap' : 'text-red-600 font-semibold whitespace-nowrap'}>
                           {isCredit ? '+' : '-'}${parseFloat(txn.amount || '0').toFixed(2)}

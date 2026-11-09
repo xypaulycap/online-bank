@@ -634,7 +634,7 @@ export const adminTransactionService = {
         if (['transfer', 'local_transfer'].includes(txType) && transaction.recipient_account_id) {
           const { data: recipientAccount, error: recipientError } = await supabase
             .from('accounts')
-            .select('balance')
+            .select('balance, user_id')
             .eq('id', transaction.recipient_account_id)
             .single()
 
@@ -642,6 +642,13 @@ export const adminTransactionService = {
 
           const recipientBalance = parseFloat(recipientAccount.balance.toString())
           const newRecipientBalance = recipientBalance + amount
+          if (recipientAccount?.user_id) {
+            import('../lib/transaction-email-helper').then(({ sendTransactionReceiptEmailHelper }) => {
+              sendTransactionReceiptEmailHelper(recipientAccount.user_id, transaction.id).catch(err => 
+                console.error('Failed to send credit receipt email to recipient:', err)
+              )
+            })
+          }
           const { error: updateRecipientError } = await supabase
             .from('accounts')
             .update({ balance: newRecipientBalance })
@@ -687,7 +694,7 @@ export const adminTransactionService = {
         if (['transfer', 'local_transfer'].includes(txType) && transaction.recipient_account_id) {
           const { data: recipientAccount, error: recipientError } = await supabase
             .from('accounts')
-            .select('balance')
+            .select('balance, user_id')
             .eq('id', transaction.recipient_account_id)
             .single()
 

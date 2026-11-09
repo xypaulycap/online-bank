@@ -387,7 +387,15 @@ export const accountService = {
     if (txError) throw txError
 
     // Send transaction receipt email (non-blocking)
-    // user is already available from the check at the beginning of the function
+    if (recipientAccountId && transaction) {
+      supabase.from('accounts').select('user_id').eq('id', recipientAccountId).single().then(({ data: recAcc }) => {
+        if (recAcc?.user_id && recAcc.user_id !== user.id) {
+          import('./transaction-email-helper').then(({ sendTransactionReceiptEmailHelper }) => {
+            sendTransactionReceiptEmailHelper(recAcc.user_id, transaction.id).catch(() => {})
+          })
+        }
+      }).catch(() => {})
+    }
     if (user && transaction) {
       import('./transaction-email-helper').then(({ sendTransactionReceiptEmailHelper }) => {
         sendTransactionReceiptEmailHelper(user.id, transaction.id).catch(err => 

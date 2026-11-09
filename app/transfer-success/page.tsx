@@ -34,24 +34,23 @@ interface TransactionDetails {
   account?: {
     account_number: string;
     account_type?: { name: string };
+    user_id?: string;
   };
   recipient_account?: {
     account_number: string;
     user_id?: string;
   };
   recipientName?: string;
+  senderName?: string;
   bankName?: string;
   recipientAccountDisplay?: string;
+  isRecipient?: boolean;
 }
 
 function TransferSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const txIdParam = searchParams.get("txId");
-
-
-
 
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
   const [currency, setCurrency] = useState("USD");
@@ -105,7 +104,7 @@ function TransferSuccessContent() {
         if (txIdParam) {
           query = query.eq("id", parseInt(txIdParam));
         } else {
-          // Fallback: get the user's latest transaction
+          // Fallback: get the user's latest transaction (sent or received)
           const { data: userAccounts } = await supabase
             .from("accounts")
             .select("id")
@@ -113,7 +112,10 @@ function TransferSuccessContent() {
 
           const accIds = userAccounts?.map((a) => a.id) || [];
           if (accIds.length > 0) {
-            query = query.in("account_id", accIds).order("timestamp", { ascending: false }).limit(1);
+            query = query
+              .or(`account_id.in.(${accIds.join(",")}),recipient_account_id.in.(${accIds.join(",")})`)
+              .order("timestamp", { ascending: false })
+              .limit(1);
           }
         }
 
@@ -142,12 +144,17 @@ function TransferSuccessContent() {
           }
         }
 
+        const rawAccount = Array.isArray(data.account) ? data.account[0] : data.account;
+        const rawRecipient = Array.isArray(data.recipient_account) ? data.recipient_account[0] : data.recipient_account;
+
+        const isUserRecipient = Boolean(rawRecipient?.user_id && rawRecipient.user_id === session.user.id);
+
         let recipientName = detailsMap["recipient_name"] || "";
-        if (!recipientName && data.recipient_account?.user_id) {
+        if (!recipientName && rawRecipient?.user_id) {
           const { data: recProfile } = await supabase
             .from("user_profiles")
             .select("first_name, last_name")
-            .eq("id", data.recipient_account.user_id)
+            .eq("id", rawRecipient.user_id)
             .single();
 
           if (recProfile) {
@@ -155,11 +162,24 @@ function TransferSuccessContent() {
           }
         }
 
+        let senderName = detailsMap["sender_name"] || "";
+        if (!senderName && rawAccount?.user_id) {
+          const { data: sndProfile } = await supabase
+            .from("user_profiles")
+            .select("first_name, last_name")
+            .eq("id", rawAccount.user_id)
+            .single();
+
+          if (sndProfile) {
+            senderName = `${sndProfile.first_name || ""} ${sndProfile.last_name || ""}`.trim();
+          }
+        }
+
         const recipientAccountDisplay = 
           detailsMap["recipient_account"] || 
           detailsMap["swiss_iban"] || 
           detailsMap["account_number"] || 
-          data.recipient_account?.account_number || 
+          rawRecipient?.account_number || 
           "External Account";
 
         const bankName = detailsMap["bank_name"] || (data.transaction_type === "transfer" ? "Valtier Financial Group" : "External Institution");
@@ -171,11 +191,13 @@ function TransferSuccessContent() {
           status: data.status,
           description: note || desc,
           timestamp: data.timestamp,
-          account: Array.isArray(data.account) ? data.account[0] : data.account,
-          recipient_account: Array.isArray(data.recipient_account) ? data.recipient_account[0] : data.recipient_account,
-          recipientName: recipientName || "Beneficiary",
+          account: rawAccount,
+          recipient_account: rawRecipient,
+          recipientName: recipientName || (isUserRecipient ? `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() : "Beneficiary"),
+          senderName: senderName || "Valtier Account Holder",
           bankName,
           recipientAccountDisplay,
+          isRecipient: isUserRecipient,
         });
       } catch (err) {
         console.error("Error loading transfer success data:", err);
@@ -268,7 +290,8 @@ function TransferSuccessContent() {
     window.print();
   };
 
-  const getTransferTypeLabel = (type: string) => {
+  const getTransferTypeLabel = (type: string, isRecipient?: boolean) => {
+    if (isRecipient && type === "transfer") return "Received Transfer";
     const map: Record<string, string> = {
       transfer: "Internal Transfer",
       local_transfer: "Local Transfer (Swiss / SEPA)",
@@ -279,6 +302,8 @@ function TransferSuccessContent() {
     };
     return map[type] || type.replace("_", " ").toUpperCase();
   };
+
+  const isRec = Boolean(transaction?.isRecipient);
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-xl">
@@ -296,10 +321,12 @@ function TransferSuccessContent() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-blue-800 dark:text-blue-300">
-            Transfer Being Processed
+            {isRec ? "Transfer Received" : "Transfer Being Processed"}
           </CardTitle>
           <CardDescription className="text-sm mt-1.5 text-muted-foreground max-w-sm mx-auto">
-            Your transaction instruction has been received and is currently being processed by our system.
+            {isRec 
+              ? "You have received an incoming transfer that has been credited to your account."
+              : "Your transaction instruction has been received and is currently being processed by our system."}
           </CardDescription>
         </div>
 
@@ -307,14 +334,14 @@ function TransferSuccessContent() {
           {/* Amount Display */}
           <div className="text-center py-3 bg-muted/40 rounded-xl border border-border/60">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Total Amount
+              {isRec ? "Amount Received" : "Total Amount"}
             </span>
-            <div className="text-3xl font-extrabold text-foreground mt-0.5 tracking-tight">
-              {transaction ? formatCurrency(transaction.amount, currency) : "Processing..."}
+            <div className={`text-3xl font-extrabold mt-0.5 tracking-tight ${isRec ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+              {transaction ? `${isRec ? "+" : ""}${formatCurrency(transaction.amount, currency)}` : "Processing..."}
             </div>
             <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-ping" />
-              Status: Processing
+              Status: {transaction?.status ? transaction.status.toUpperCase() : "PROCESSING"}
             </div>
           </div>
 
@@ -368,19 +395,21 @@ function TransferSuccessContent() {
                 Transfer Type
               </span>
               <span className="font-medium text-foreground">
-                {transaction ? getTransferTypeLabel(transaction.transaction_type) : "Transfer"}
+                {transaction ? getTransferTypeLabel(transaction.transaction_type, isRec) : "Transfer"}
               </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-border/50">
               <span className="text-muted-foreground flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
-                Source Account
+                {isRec ? "Sender" : "Source Account"}
               </span>
               <span className="font-medium text-foreground">
-                {transaction?.account
-                  ? `${transaction.account.account_type?.name || "Account"} (**** ${transaction.account.account_number.slice(-4)})`
-                  : "Checking Account"}
+                {isRec 
+                  ? (transaction?.senderName || "Valtier Account Holder")
+                  : (transaction?.account
+                    ? `${transaction.account.account_type?.name || "Account"} (**** ${transaction.account.account_number.slice(-4)})`
+                    : "Checking Account")}
               </span>
             </div>
 
@@ -401,7 +430,7 @@ function TransferSuccessContent() {
 
             {transaction?.bankName && (
               <div className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Receiving Bank</span>
+                <span className="text-muted-foreground">Bank</span>
                 <span className="font-medium text-foreground text-right">
                   {transaction.bankName}
                 </span>

@@ -46,12 +46,15 @@ export async function POST(request: NextRequest) {
           id,
           account_number,
           balance,
+          user_id,
           account_type:account_types(name)
         ),
         recipient_account:accounts!transactions_recipient_account_id_fkey(
           id,
           account_number,
-          user_id
+          balance,
+          user_id,
+          account_type:account_types(name)
         )
       `)
       .eq('id', transaction_id)
@@ -65,7 +68,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get recipient user name if it's a transfer
+    const isRecipient = transaction.recipient_account?.user_id === user_id;
+
+    // Get recipient user name
     let recipientName: string | undefined;
     if (transaction.recipient_account?.user_id) {
       const { data: recipientProfile } = await supabaseAdmin
@@ -75,21 +80,44 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (recipientProfile) {
-        recipientName = `${recipientProfile.first_name} ${recipientProfile.last_name}`.trim();
+        recipientName = `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim();
       }
     }
 
-    // Prepare transaction data for email
+    // Get sender user name
+    let senderName: string | undefined;
+    if (transaction.account?.user_id) {
+      const { data: senderProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('first_name, last_name')
+        .eq('id', transaction.account.user_id)
+        .single();
+
+      if (senderProfile) {
+        senderName = `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim();
+      }
+    }
+
+    // Prepare transaction data for email based on sender vs recipient
+    const emailAccount = isRecipient && transaction.recipient_account
+      ? transaction.recipient_account
+      : transaction.account;
+
+    const emailType = isRecipient && transaction.transaction_type === 'transfer'
+      ? 'received_transfer'
+      : transaction.transaction_type;
+
     const transactionData = {
-      type: transaction.transaction_type,
+      type: emailType,
       status: transaction.status,
       amount: parseFloat(transaction.amount.toString()),
       description: transaction.description || undefined,
-      accountNumber: transaction.account.account_number,
-      accountType: transaction.account.account_type?.name || 'Account',
-      balance: parseFloat(transaction.account.balance.toString()),
+      accountNumber: emailAccount.account_number,
+      accountType: emailAccount.account_type?.name || 'Account',
+      balance: parseFloat((emailAccount.balance ?? '0').toString()),
       recipientAccountNumber: transaction.recipient_account?.account_number,
       recipientName: recipientName,
+      senderName: senderName,
       transactionHash: transaction.description?.includes('Transaction Hash:') 
         ? transaction.description.split('Transaction Hash:')[1]?.trim() 
         : undefined,
@@ -97,8 +125,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Send email
-    console.log('Sending transaction receipt email to:', authUser.user.email);
-    console.log('Transaction data:', transactionData);
+    console.log('Sending transaction receipt email to:', authUser.user.email, 'isRecipient:', isRecipient);
     
     await sendTransactionReceiptEmail(authUser.user.email, transactionData);
 
@@ -122,4 +149,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
