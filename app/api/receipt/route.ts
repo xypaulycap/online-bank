@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: missing authorization header' }, { status: 401 });
     }
 
-    const supabase = createClient(
+    // Authenticate user with their token
+    const supabaseUser = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -33,20 +34,32 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Create admin client with service role key to bypass RLS and read full transaction and profile data
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     // Fetch user profile of requester
-    const { data: requesterProfile } = await supabase
+    const { data: requesterProfile } = await supabaseAdmin
       .from('user_profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
-    // Fetch transaction details
-    const { data: transaction, error: txError } = await supabase
+    // Fetch transaction details with full accounts
+    const { data: transaction, error: txError } = await supabaseAdmin
       .from('transactions')
       .select(`
         *,
@@ -72,42 +85,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    // Ensure transaction belongs to user as either SENDER or RECIPIENT
+    // Ensure transaction belongs to requester as either SENDER or RECIPIENT
     const isSender = transaction.account?.user_id === user.id;
     const isRecipient = transaction.recipient_account?.user_id === user.id;
 
     if (!isSender && !isRecipient) {
       return NextResponse.json({ error: 'Unauthorized access to this transaction' }, { status: 403 });
-    }
-
-    // Resolve sender profile
-    let senderProfile: any = null;
-    if (transaction.account?.user_id) {
-      if (transaction.account.user_id === user.id) {
-        senderProfile = requesterProfile;
-      } else {
-        const { data: sProf } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', transaction.account.user_id)
-          .single();
-        senderProfile = sProf;
-      }
-    }
-
-    // Resolve recipient profile
-    let recipientProfile: any = null;
-    if (transaction.recipient_account?.user_id) {
-      if (transaction.recipient_account.user_id === user.id) {
-        recipientProfile = requesterProfile;
-      } else {
-        const { data: rProf } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', transaction.recipient_account.user_id)
-          .single();
-        recipientProfile = rProf;
-      }
     }
 
     // Parse description for extra transfer fields (wire / local / international)
@@ -129,22 +112,52 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Resolve sender profile via supabaseAdmin
+    let senderProfile: any = null;
+    if (transaction.account?.user_id) {
+      const { data: sProf } = await supabaseAdmin
+        .from('user_profiles')
+        .select('first_name, last_name, email')
+        .eq('id', transaction.account.user_id)
+        .single();
+      senderProfile = sProf;
+    }
+
+    // Resolve recipient profile via supabaseAdmin
+    let recipientProfile: any = null;
+    if (transaction.recipient_account?.user_id) {
+      const { data: rProf } = await supabaseAdmin
+        .from('user_profiles')
+        .select('first_name, last_name, email')
+        .eq('id', transaction.recipient_account.user_id)
+        .single();
+      recipientProfile = rProf;
+    }
+
     const isDeposit = transaction.transaction_type === 'deposit';
     const isWithdrawal = transaction.transaction_type === 'withdrawal';
 
-    // Sender Display
-    const senderFullName = senderProfile
-      ? `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim()
-      : (detailsMap['sender_name'] || (isDeposit ? 'Deposit Processing' : 'Valtier Account Holder'));
+    // Sender Name formatting
+    let senderFullName = '';
+    if (senderProfile) {
+      senderFullName = `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim();
+    }
+    if (!senderFullName) {
+      senderFullName = detailsMap['sender_name'] || detailsMap['sender_email'] || (isDeposit ? 'Deposit Channel' : 'Valtier Account Holder');
+    }
 
     const senderAccountDisplay = transaction.account?.account_number
       ? `${transaction.account.account_type?.name || 'Account'} (**** ${transaction.account.account_number.slice(-4)})`
       : 'N/A';
 
-    // Recipient Display
-    const recipientFullName = recipientProfile
-      ? `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim()
-      : (detailsMap['recipient_name'] || (isDeposit ? senderFullName : (isWithdrawal ? senderFullName : 'Authorized Beneficiary')));
+    // Recipient Name formatting
+    let recipientFullName = '';
+    if (recipientProfile) {
+      recipientFullName = `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim();
+    }
+    if (!recipientFullName) {
+      recipientFullName = detailsMap['recipient_name'] || (isDeposit ? senderFullName : (isWithdrawal ? senderFullName : 'Authorized Beneficiary'));
+    }
 
     const recipientAccountDisplay = 
       detailsMap['recipient_account'] || 
@@ -248,10 +261,10 @@ export async function GET(req: NextRequest) {
         doc.roundedRect(40, amountBoxY, 515, 65, 6).fillAndStroke('#f8fafc', '#cbd5e1');
 
         const amountBoxTitle = isRecipient ? 'AMOUNT RECEIVED (CREDIT)' : 'AMOUNT TRANSFERRED';
-        const amountDisplay = isRecipient ? `+${amountFormatted}` : amountFormatted;
+        const amountDisplay = isRecipient ? `+${amountFormatted}` : (isDeposit ? `+${amountFormatted}` : `-${amountFormatted}`);
 
         doc.font('Helvetica').fontSize(10).fillColor('#64748b').text(amountBoxTitle, 55, amountBoxY + 12);
-        doc.font('Helvetica-Bold').fontSize(22).fillColor(isRecipient ? '#15803d' : '#0f172a').text(amountDisplay, 55, amountBoxY + 28);
+        doc.font('Helvetica-Bold').fontSize(22).fillColor(isRecipient || isDeposit ? '#15803d' : '#0f172a').text(amountDisplay, 55, amountBoxY + 28);
         doc.font('Helvetica').fontSize(9).fillColor('#3b82f6').text('Processing fee: $0.00 (Standard)', 350, amountBoxY + 30, { align: 'right', width: 190 });
 
         // Main Details Table / Key-Values
@@ -298,7 +311,7 @@ export async function GET(req: NextRequest) {
         detailY += 40;
         detailY = drawSectionTitle('Additional Details', detailY);
         drawRow('Reference / Note', userNote || detailsMap['message'] || 'No note provided', detailY);
-        drawRow('Direction / Impact', isRecipient ? 'Incoming Credit (+)' : 'Outgoing Debit (-)', detailY, true);
+        drawRow('Direction / Impact', (isRecipient || isDeposit) ? 'Incoming Credit (+)' : 'Outgoing Debit (-)', detailY, true);
 
         // Notice / Information Box
         detailY += 42;
@@ -308,7 +321,7 @@ export async function GET(req: NextRequest) {
         const noticeText = isRecipient
           ? (statusLabel === 'COMPLETED'
               ? 'These funds have been successfully received and credited to your account. Keep this receipt for your records.'
-              : 'This incoming transfer instruction has been registered and is undergoing final settlement. Keep this receipt for your records.')
+              : 'This incoming transfer instruction has been received and is pending final settlement. Keep this receipt for your records.')
           : 'This transaction instruction has been submitted and registered. Internal transfers reflect immediately or upon final ledger settlement. External and wire transfers may require standard interbank clearing cycles (1-3 business days). Keep this receipt for your records.';
 
         doc.font('Helvetica').fontSize(8).fillColor('#64748b').text(
