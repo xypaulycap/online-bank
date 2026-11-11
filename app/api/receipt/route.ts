@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    // Fetch transaction details with full accounts
+    // Fetch transaction details
     const { data: transaction, error: txError } = await supabaseAdmin
       .from('transactions')
       .select(`
@@ -85,9 +85,31 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
+    // Normalize sender account (handle array or missing relation fallback)
+    let senderAccount: any = Array.isArray(transaction.account) ? transaction.account[0] : transaction.account;
+    if (!senderAccount && transaction.account_id) {
+      const { data: directSenderAcc } = await supabaseAdmin
+        .from('accounts')
+        .select('id, user_id, account_number, balance, account_types(name)')
+        .eq('id', transaction.account_id)
+        .single();
+      senderAccount = directSenderAcc;
+    }
+
+    // Normalize recipient account (handle array or missing relation fallback)
+    let recipientAccount: any = Array.isArray(transaction.recipient_account) ? transaction.recipient_account[0] : transaction.recipient_account;
+    if (!recipientAccount && transaction.recipient_account_id) {
+      const { data: directRecAcc } = await supabaseAdmin
+        .from('accounts')
+        .select('id, user_id, account_number, balance, account_types(name)')
+        .eq('id', transaction.recipient_account_id)
+        .single();
+      recipientAccount = directRecAcc;
+    }
+
     // Ensure transaction belongs to requester as either SENDER or RECIPIENT
-    const isSender = transaction.account?.user_id === user.id;
-    const isRecipient = transaction.recipient_account?.user_id === user.id;
+    const isSender = senderAccount?.user_id === user.id;
+    const isRecipient = recipientAccount?.user_id === user.id;
 
     if (!isSender && !isRecipient) {
       return NextResponse.json({ error: 'Unauthorized access to this transaction' }, { status: 403 });
@@ -112,49 +134,86 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Resolve sender profile via supabaseAdmin
-    let senderProfile: any = null;
-    if (transaction.account?.user_id) {
+    // 1. Resolve Sender Full Name
+    let senderFullName = '';
+    const senderUserId = senderAccount?.user_id;
+
+    if (senderUserId) {
       const { data: sProf } = await supabaseAdmin
         .from('user_profiles')
         .select('first_name, last_name, email')
-        .eq('id', transaction.account.user_id)
+        .eq('id', senderUserId)
         .single();
-      senderProfile = sProf;
-    }
 
-    // Resolve recipient profile via supabaseAdmin
-    let recipientProfile: any = null;
-    if (transaction.recipient_account?.user_id) {
-      const { data: rProf } = await supabaseAdmin
-        .from('user_profiles')
-        .select('first_name, last_name, email')
-        .eq('id', transaction.recipient_account.user_id)
-        .single();
-      recipientProfile = rProf;
+      if (sProf?.first_name || sProf?.last_name) {
+        senderFullName = `${sProf.first_name || ''} ${sProf.last_name || ''}`.trim();
+      }
+
+      // If profile didn't have names, check auth metadata
+      if (!senderFullName) {
+        try {
+          const { data: authSender } = await supabaseAdmin.auth.admin.getUserById(senderUserId);
+          const meta = authSender?.user?.user_metadata || {};
+          if (meta.first_name || meta.last_name) {
+            senderFullName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim();
+          } else if (meta.full_name) {
+            senderFullName = meta.full_name;
+          } else if (meta.name) {
+            senderFullName = meta.name;
+          } else if (authSender?.user?.email) {
+            senderFullName = authSender.user.email.split('@')[0];
+          }
+        } catch (e) {
+          console.warn('Could not fetch auth sender metadata:', e);
+        }
+      }
     }
 
     const isDeposit = transaction.transaction_type === 'deposit';
     const isWithdrawal = transaction.transaction_type === 'withdrawal';
 
-    // Sender Name formatting
-    let senderFullName = '';
-    if (senderProfile) {
-      senderFullName = `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim();
-    }
     if (!senderFullName) {
       senderFullName = detailsMap['sender_name'] || detailsMap['sender_email'] || (isDeposit ? 'Deposit Channel' : 'Valtier Account Holder');
     }
 
-    const senderAccountDisplay = transaction.account?.account_number
-      ? `${transaction.account.account_type?.name || 'Account'} (**** ${transaction.account.account_number.slice(-4)})`
+    const senderAccountDisplay = senderAccount?.account_number
+      ? `${senderAccount.account_types?.name || senderAccount.account_type?.name || 'Account'} (**** ${senderAccount.account_number.slice(-4)})`
       : 'N/A';
 
-    // Recipient Name formatting
+    // 2. Resolve Recipient Full Name
     let recipientFullName = '';
-    if (recipientProfile) {
-      recipientFullName = `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim();
+    const recipientUserId = recipientAccount?.user_id;
+
+    if (recipientUserId) {
+      const { data: rProf } = await supabaseAdmin
+        .from('user_profiles')
+        .select('first_name, last_name, email')
+        .eq('id', recipientUserId)
+        .single();
+
+      if (rProf?.first_name || rProf?.last_name) {
+        recipientFullName = `${rProf.first_name || ''} ${rProf.last_name || ''}`.trim();
+      }
+
+      if (!recipientFullName) {
+        try {
+          const { data: authRec } = await supabaseAdmin.auth.admin.getUserById(recipientUserId);
+          const meta = authRec?.user?.user_metadata || {};
+          if (meta.first_name || meta.last_name) {
+            recipientFullName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim();
+          } else if (meta.full_name) {
+            recipientFullName = meta.full_name;
+          } else if (meta.name) {
+            recipientFullName = meta.name;
+          } else if (authRec?.user?.email) {
+            recipientFullName = authRec.user.email.split('@')[0];
+          }
+        } catch (e) {
+          console.warn('Could not fetch auth recipient metadata:', e);
+        }
+      }
     }
+
     if (!recipientFullName) {
       recipientFullName = detailsMap['recipient_name'] || (isDeposit ? senderFullName : (isWithdrawal ? senderFullName : 'Authorized Beneficiary'));
     }
@@ -163,7 +222,7 @@ export async function GET(req: NextRequest) {
       detailsMap['recipient_account'] || 
       detailsMap['swiss_iban'] || 
       detailsMap['account_number'] || 
-      (transaction.recipient_account?.account_number ? `${transaction.recipient_account.account_type?.name || 'Account'} (**** ${transaction.recipient_account.account_number.slice(-4)})` : null) || 
+      (recipientAccount?.account_number ? `${recipientAccount.account_types?.name || recipientAccount.account_type?.name || 'Account'} (**** ${recipientAccount.account_number.slice(-4)})` : null) || 
       (isDeposit ? senderAccountDisplay : (isWithdrawal ? 'Direct Withdrawal' : 'N/A'));
 
     const bankNameDisplay = 
@@ -189,6 +248,7 @@ export async function GET(req: NextRequest) {
       timeZoneName: 'short'
     });
 
+    const isCredit = isRecipient || isDeposit;
     const typeLabels: Record<string, string> = {
       transfer: isRecipient ? 'Received Transfer' : 'Internal Transfer',
       local_transfer: 'Local Transfer (SEPA / Swiss)',
@@ -236,8 +296,8 @@ export async function GET(req: NextRequest) {
 
         // Title and Status Banner
         doc.y = dividerY + 15;
-        const mainTitle = isRecipient ? 'TRANSACTION RECEIPT (CREDIT)' : 'TRANSACTION RECEIPT';
-        const subTitle = isRecipient ? 'Official Electronic Confirmation of Received Funds' : 'Official Electronic Payment Confirmation';
+        const mainTitle = isCredit ? 'TRANSACTION RECEIPT (CREDIT)' : 'TRANSACTION RECEIPT';
+        const subTitle = isCredit ? 'Official Electronic Confirmation of Received Funds' : 'Official Electronic Payment Confirmation';
 
         doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f172a').text(mainTitle, 40, doc.y);
         doc.font('Helvetica').fontSize(9).fillColor('#64748b').text(subTitle, 40, doc.y);
@@ -260,11 +320,11 @@ export async function GET(req: NextRequest) {
         const amountBoxY = doc.y + 10;
         doc.roundedRect(40, amountBoxY, 515, 65, 6).fillAndStroke('#f8fafc', '#cbd5e1');
 
-        const amountBoxTitle = isRecipient ? 'AMOUNT RECEIVED (CREDIT)' : 'AMOUNT TRANSFERRED';
-        const amountDisplay = isRecipient ? `+${amountFormatted}` : (isDeposit ? `+${amountFormatted}` : `-${amountFormatted}`);
+        const amountBoxTitle = isCredit ? 'AMOUNT RECEIVED (CREDIT)' : 'AMOUNT TRANSFERRED';
+        const amountDisplay = isCredit ? `+${amountFormatted}` : `-${amountFormatted}`;
 
         doc.font('Helvetica').fontSize(10).fillColor('#64748b').text(amountBoxTitle, 55, amountBoxY + 12);
-        doc.font('Helvetica-Bold').fontSize(22).fillColor(isRecipient || isDeposit ? '#15803d' : '#0f172a').text(amountDisplay, 55, amountBoxY + 28);
+        doc.font('Helvetica-Bold').fontSize(22).fillColor(isCredit ? '#15803d' : '#0f172a').text(amountDisplay, 55, amountBoxY + 28);
         doc.font('Helvetica').fontSize(9).fillColor('#3b82f6').text('Processing fee: $0.00 (Standard)', 350, amountBoxY + 30, { align: 'right', width: 190 });
 
         // Main Details Table / Key-Values
@@ -311,14 +371,14 @@ export async function GET(req: NextRequest) {
         detailY += 40;
         detailY = drawSectionTitle('Additional Details', detailY);
         drawRow('Reference / Note', userNote || detailsMap['message'] || 'No note provided', detailY);
-        drawRow('Direction / Impact', (isRecipient || isDeposit) ? 'Incoming Credit (+)' : 'Outgoing Debit (-)', detailY, true);
+        drawRow('Direction / Impact', isCredit ? 'Incoming Credit (+)' : 'Outgoing Debit (-)', detailY, true);
 
         // Notice / Information Box
         detailY += 42;
         doc.roundedRect(40, detailY, 515, 48, 4).fillAndStroke('#f1f5f9', '#e2e8f0');
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#334155').text('Notice on Processing:', 50, detailY + 8);
 
-        const noticeText = isRecipient
+        const noticeText = isCredit
           ? (statusLabel === 'COMPLETED'
               ? 'These funds have been successfully received and credited to your account. Keep this receipt for your records.'
               : 'This incoming transfer instruction has been received and is pending final settlement. Keep this receipt for your records.')

@@ -181,7 +181,14 @@ export default function Dashboard() {
     : 0;
   
   const monthlyDeposits = transactions
-    .filter(tx => tx.transaction_type === 'deposit')
+    .filter(tx => {
+      const isRecip = Boolean(
+        tx.recipient_account &&
+        accounts.some(a => String(a.id) === String(tx.recipient_account)) &&
+        !accounts.some(a => String(a.id) === String(tx.account))
+      );
+      return tx.transaction_type === 'deposit' || isRecip;
+    })
     .filter(tx => {
       const txDate = new Date(tx.timestamp);
       const now = new Date();
@@ -190,7 +197,15 @@ export default function Dashboard() {
     .reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
   
   const monthlyExpenses = transactions
-    .filter(tx => tx.transaction_type === 'withdrawal' || tx.transaction_type === 'payment')
+    .filter(tx => {
+      const isRecip = Boolean(
+        tx.recipient_account &&
+        accounts.some(a => String(a.id) === String(tx.recipient_account)) &&
+        !accounts.some(a => String(a.id) === String(tx.account))
+      );
+      if (isRecip) return false;
+      return tx.transaction_type === 'withdrawal' || tx.transaction_type === 'payment';
+    })
     .filter(tx => {
       const txDate = new Date(tx.timestamp);
       const now = new Date();
@@ -529,21 +544,31 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     {recentTransactions.length > 0 ? (
                       recentTransactions.map((transaction) => {
-                        const fallbackLabel =
-                          transaction.transaction_type.charAt(0).toUpperCase() +
-                          transaction.transaction_type.slice(1).replace("_", " ");
-                        const summary = getTransactionSummary(transaction.description, fallbackLabel);
+                        const isRecipient = Boolean(
+                          transaction.recipient_account &&
+                          accounts.some(a => String(a.id) === String(transaction.recipient_account)) &&
+                          !accounts.some(a => String(a.id) === String(transaction.account))
+                        );
+                        const isCredit = transaction.transaction_type === 'deposit' || isRecipient;
+
+                        const fallbackLabel = isRecipient && (transaction.transaction_type === 'transfer' || transaction.transaction_type === 'local_transfer' || transaction.transaction_type === 'wire_transfer')
+                          ? 'Transfer Received'
+                          : transaction.transaction_type.charAt(0).toUpperCase() +
+                            transaction.transaction_type.slice(1).replace("_", " ");
+                        const summary = isRecipient && (transaction.transaction_type === 'transfer' || transaction.transaction_type === 'local_transfer' || transaction.transaction_type === 'wire_transfer')
+                          ? 'Transfer Received'
+                          : getTransactionSummary(transaction.description, fallbackLabel);
                         const recipientEmail = extractEmailField(transaction.description);
 
                         return (
                         <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                           <div className="flex items-center">
                             <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-3 ${
-                              transaction.transaction_type === 'deposit' 
+                              isCredit 
                                 ? 'bg-green-100 dark:bg-green-900/30' 
                                 : 'bg-red-100 dark:bg-red-900/30'
                             }`}>
-                              {transaction.transaction_type === 'deposit' ? (
+                              {isCredit ? (
                                 <ArrowDownLeft className="h-5 w-5 text-green-600 dark:text-green-400" />
                               ) : (
                                 <ArrowUpRight className="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -571,11 +596,11 @@ export default function Dashboard() {
                           </div>
                           <div className="text-right">
                             <p className={`font-bold ${
-                              transaction.transaction_type === 'deposit' 
+                              isCredit 
                                 ? 'text-green-600 dark:text-green-400' 
                                 : 'text-red-600 dark:text-red-400'
                             }`}>
-                              {transaction.transaction_type === 'deposit' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount || '0'), user?.currency || 'USD')}
+                              {isCredit ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount || '0'), user?.currency || 'USD')}
                             </p>
                             {transaction.category && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

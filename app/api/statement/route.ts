@@ -91,7 +91,8 @@ export async function POST(req: NextRequest) {
     let totalDebits = 0;
     if (transactions && transactions.length > 0) {
       transactions.forEach((tx: any) => {
-        const isDebit = ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(tx.transaction_type);
+        const isRecipient = String(tx.recipient_account_id) === String(accountId);
+        const isDebit = !isRecipient && ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(tx.transaction_type);
         if (isDebit) {
           totalDebits += parseFloat(tx.amount);
         } else {
@@ -170,10 +171,13 @@ export async function POST(req: NextRequest) {
             title: "Transaction History",
             headers: ["Date", "Description", "Type", "Status", "Amount"],
             rows: transactions.map((tx: any) => {
-              const isDebit = ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(tx.transaction_type);
+              const isRecipient = String(tx.recipient_account_id) === String(accountId);
+              const isDebit = !isRecipient && ['withdrawal', 'transfer', 'local_transfer', 'wire_transfer', 'payment'].includes(tx.transaction_type);
               const amountStr = `${isDebit ? '-' : '+'}${formatCurrency(parseFloat(tx.amount), currency)}`;
               const dateStr = new Date(tx.timestamp).toLocaleDateString();
-              const typeStr = (tx.transaction_type.charAt(0).toUpperCase() + tx.transaction_type.slice(1)).replace('_', ' ');
+              const typeStr = isRecipient && ['transfer', 'local_transfer', 'wire_transfer'].includes(tx.transaction_type)
+                ? 'Transfer Received'
+                : (tx.transaction_type.charAt(0).toUpperCase() + tx.transaction_type.slice(1)).replace('_', ' ');
               
               // Clean description
               let desc = tx.description || typeStr;

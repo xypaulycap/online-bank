@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  ArrowDownLeft,
   ArrowUpRight,
   CreditCard,
   DollarSign,
@@ -26,7 +27,7 @@ interface Account {
 interface Transaction {
   id: number;
   account: number;
-  transaction_type: "deposit" | "withdrawal" | "transfer" | "payment";
+  transaction_type: "deposit" | "withdrawal" | "transfer" | "payment" | "local_transfer" | "wire_transfer" | "international_transfer" | string;
   amount: string;
   description: string;
   category: { id: number; name: string; description: string } | null;
@@ -125,36 +126,50 @@ export default function AccountsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {transactions.slice(0, 5).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                    {transaction.transaction_type === "deposit" ? (
-                      <ArrowUpRight className="h-5 w-5 text-emerald-600" />
-                    ) : (
-                      <CreditCard className="h-5 w-5 text-emerald-600" />
-                    )}
+            {transactions.slice(0, 5).map((transaction) => {
+              const isRecipient = Boolean(
+                transaction.recipient_account &&
+                accounts.some((a) => String(a.id) === String(transaction.recipient_account)) &&
+                !accounts.some((a) => String(a.id) === String(transaction.account))
+              );
+              const isCredit = transaction.transaction_type === "deposit" || isRecipient;
+              const displayTitle = isRecipient && (transaction.transaction_type === "transfer" || transaction.transaction_type === "local_transfer" || transaction.transaction_type === "wire_transfer")
+                ? "Transfer Received"
+                : transaction.description;
+
+              return (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                      isCredit ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-red-100 dark:bg-red-900/30"
+                    }`}>
+                      {isCredit ? (
+                        <ArrowDownLeft className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <ArrowUpRight className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{displayTitle}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(transaction.timestamp).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
+                  <div className="text-right">
+                    <p className={`font-medium ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                      {isCredit ? "+" : "-"}${transaction.amount}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(transaction.timestamp).toLocaleString()}
+                      {transaction.category?.name || "Uncategorized"}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    {transaction.transaction_type === "deposit" ? "+" : "-"}${transaction.amount}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {transaction.category?.name || "Uncategorized"}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

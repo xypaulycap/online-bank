@@ -233,9 +233,13 @@ export default function TransactionHistory() {
                 <TableBody>
                   {transactions.map((txn) => {
                     const recipientEmail = extractEmailField(txn.description);
-                    const isRecipient = Boolean(txn.recipient_account && userAccountIds.includes(txn.recipient_account));
+                    const isRecipient = Boolean(
+                      txn.recipient_account &&
+                      userAccountIds.some(id => String(id) === String(txn.recipient_account)) &&
+                      !userAccountIds.some(id => String(id) === String(txn.account))
+                    );
                     const isCredit = txn.transaction_type === 'deposit' || isRecipient;
-                    const typeDisplay = isRecipient && txn.transaction_type === 'transfer'
+                    const typeDisplay = isRecipient && (txn.transaction_type === 'transfer' || txn.transaction_type === 'local_transfer' || txn.transaction_type === 'wire_transfer')
                       ? 'Received Transfer'
                       : txn.transaction_type.replace("_", " ");
                     const summary = getTransactionSummary(
